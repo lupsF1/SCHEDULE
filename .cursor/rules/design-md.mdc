@@ -1,0 +1,17 @@
+---
+description: Use project DESIGN.md (Google DESIGN.md format) as the source of truth for visual identity and tokens.
+alwaysApply: true
+---
+
+# DESIGN.md agent
+
+The repository follows the [DESIGN.md](https://github.com/google-labs-code/design.md) format: YAML front matter holds **normative** design tokens; markdown sections explain **how** to apply them.
+
+When building or changing UI:
+
+1. Read `DESIGN.md` at the repo root before picking colors, type scales, radii, or component chrome.
+2. Treat token values in front matter as authoritative; prose explains intent and composition rules.
+3. After editing `DESIGN.md`, run `npm run design:lint` and fix reported errors.
+4. To emit machine-readable tokens, use `npm run design:export-tailwind` (Tailwind theme JSON) or `npm run design:export-dtcg` (Design Tokens Format) and wire outputs into your build pipeline.
+
+The CLI is provided by the dev dependency `@google/design.md`; npm scripts invoke the `design.md` CLI from `package.json`.

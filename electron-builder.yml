@@ -1,0 +1,35 @@
+appId: com.schedule.desktop
+productName: Schedule
+copyright: Copyright © 2026
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - package.json
+  - out/**/*
+
+asar: true
+
+# Windows：仅 NSIS — 双击运行安装向导（非绿色版）
+win:
+  target:
+    - nsis
+
+nsis:
+  artifactName: ${productName}-Setup-${version}.${ext}
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  allowElevation: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Schedule
+  uninstallDisplayName: Schedule
+
+linux:
+  target: AppImage
+
+mac:
+  target: dmg

@@ -1,0 +1,11 @@
+node_modules/
+out/
+release/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# TypeScript build info
+*.tsbuildinfo

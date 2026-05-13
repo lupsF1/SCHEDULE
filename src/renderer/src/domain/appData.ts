@@ -1,0 +1,97 @@
+/** Matches DESIGN.md — visual tokens applied via CSS variables in main.css */
+
+export type ScheduledItem = {
+  id: string
+  dayKey: string
+  title: string
+  startTime: string
+  endTime: string | null
+}
+
+export type NoteBlock = {
+  id: string
+  title: string
+  body: string
+}
+
+export type AppDataV1 = {
+  version: 1
+  scheduledItems: ScheduledItem[]
+  noteBlocks: NoteBlock[]
+}
+
+export function todayKey(date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+export function defaultAppData(): AppDataV1 {
+  const day = todayKey()
+  return {
+    version: 1,
+    scheduledItems: [
+      {
+        id: crypto.randomUUID(),
+        dayKey: day,
+        title: '示例：晨会准备',
+        startTime: '09:00',
+        endTime: '09:30'
+      }
+    ],
+    noteBlocks: [
+      {
+        id: crypto.randomUUID(),
+        title: '随手记',
+        body: ''
+      }
+    ]
+  }
+}
+
+export function timeToMinutes(t: string): number {
+  const [h = '0', m = '0'] = t.split(':')
+  return Number.parseInt(h, 10) * 60 + Number.parseInt(m, 10)
+}
+
+export function sortItemsByStart(items: ScheduledItem[]): ScheduledItem[] {
+  return [...items].sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime))
+}
+
+export function parseAppData(raw: string | null): AppDataV1 {
+  if (!raw?.trim()) return defaultAppData()
+  try {
+    const o = JSON.parse(raw) as Partial<AppDataV1>
+    if (o.version !== 1 || !Array.isArray(o.scheduledItems) || !Array.isArray(o.noteBlocks)) {
+      return defaultAppData()
+    }
+    return {
+      version: 1,
+      scheduledItems: o.scheduledItems.map(normalizeScheduledItem),
+      noteBlocks: o.noteBlocks.map(normalizeNoteBlock)
+    }
+  } catch {
+    return defaultAppData()
+  }
+}
+
+function normalizeScheduledItem(x: ScheduledItem): ScheduledItem {
+  return {
+    id: typeof x.id === 'string' ? x.id : crypto.randomUUID(),
+    dayKey: typeof x.dayKey === 'string' ? x.dayKey : todayKey(),
+    title: typeof x.title === 'string' ? x.title : '',
+    startTime: typeof x.startTime === 'string' ? x.startTime : '09:00',
+    endTime: typeof x.endTime === 'string' || x.endTime === null ? x.endTime : null
+  }
+}
+
+function normalizeNoteBlock(x: NoteBlock): NoteBlock {
+  return {
+    id: typeof x.id === 'string' ? x.id : crypto.randomUUID(),
+    title: typeof x.title === 'string' ? x.title : '',
+    body: typeof x.body === 'string' ? x.body : ''
+  }
+}
+
+export function serializeAppData(data: AppDataV1): string {
+  return JSON.stringify(data, null, 2)
+}
