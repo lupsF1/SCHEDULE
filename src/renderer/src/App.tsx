@@ -18,14 +18,12 @@ function Toolbar({
   pinned,
   onPinnedChange,
   onClose,
-  subtitle,
-  onAdjustWindow
+  subtitle
 }: {
   pinned: boolean
   onPinnedChange: (v: boolean) => void
   onClose: () => void
   subtitle: string
-  onAdjustWindow: (dw: number, dh: number) => Promise<void>
 }): ReactElement {
   return (
     <header className="strip-toolbar app-no-drag">
@@ -41,22 +39,6 @@ function Toolbar({
           />
           <span>置顶</span>
         </label>
-        <button
-          type="button"
-          className="btn-mini btn-mini-ghost strip-toolbar-win"
-          title="缩小窗口（也可用系统边沿拖拽）"
-          onClick={() => void onAdjustWindow(-40, -40)}
-        >
-          窄
-        </button>
-        <button
-          type="button"
-          className="btn-mini btn-mini-ghost strip-toolbar-win"
-          title="放大窗口"
-          onClick={() => void onAdjustWindow(40, 40)}
-        >
-          宽
-        </button>
         <button type="button" className="btn-icon-soft strip-toolbar-close" title="收起窗口" onClick={onClose}>
           −
         </button>
@@ -282,19 +264,6 @@ export default function App(): ReactElement {
     await window.desktop.setAlwaysOnTop(next)
   }, [])
 
-  const onAdjustWindow = useCallback(async (dw: number, dh: number) => {
-    try {
-      const r = await window.desktop.adjustWindowSize(dw, dh)
-      if (r != null && !r.changed && dw < 0 && dh < 0) {
-        window.alert(
-          '窗口已是当前允许的最小大小（宽高各约 320×360）。\n请拖拽窗口外侧边缘缩放；若在 Linux 下边沿拖拽无效，可继续用「宽」。'
-        )
-      }
-    } catch (e) {
-      console.error(e)
-    }
-  }, [])
-
   if (!ready) {
     return (
       <div className="content-pad app-corkboard">
@@ -316,7 +285,6 @@ export default function App(): ReactElement {
             onPinnedChange={onPinnedChange}
             onClose={() => void window.desktop.closeWindow()}
             subtitle={dateLabel}
-            onAdjustWindow={onAdjustWindow}
           />
           <div
             className="window-drag-gutter app-drag"
@@ -333,7 +301,7 @@ export default function App(): ReactElement {
             <div className="window-drag-shim app-drag" aria-hidden />
             <div className="app-main-content app-no-drag">
               <p className="cork-banner app-no-drag">
-                拖窗口边沿或点工具栏「宽／窄」调大小 · 置顶与专注顶栏均可勾选 · 「贴上来」后先草稿，保存成便签
+                拖拽窗口外边沿缩放 · 顶栏拖动移动 · 「贴上来」后先草稿，保存成便签
               </p>
               <ScheduleStickySection
                 day={day}
@@ -345,7 +313,6 @@ export default function App(): ReactElement {
                 focusTotalsMsByItemId={totals}
                 pinned={pinned}
                 onPinnedChange={onPinnedChange}
-                onAdjustWindow={onAdjustWindow}
                 layoutBump={layoutBump}
               />
               <MemoStickySection day={day} blocks={data.noteBlocks} setBlocks={setBlocks} />
@@ -362,7 +329,6 @@ export default function App(): ReactElement {
             focusTotalsMsByItemId={totals}
             pinned={pinned}
             onPinnedChange={onPinnedChange}
-            onAdjustWindow={onAdjustWindow}
             layoutBump={layoutBump}
           />
         )}

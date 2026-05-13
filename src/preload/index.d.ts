@@ -6,10 +6,6 @@ export type DesktopAPI = {
   saveState: (payload: string) => Promise<void>
   setAlwaysOnTop: (enabled: boolean) => Promise<boolean>
   getAlwaysOnTop: () => Promise<boolean>
-  adjustWindowSize: (
-    dw: number,
-    dh: number
-  ) => Promise<{ width: number; height: number; changed: boolean } | null>
   closeWindow: () => Promise<void>
   quitApp: () => Promise<void>
 }

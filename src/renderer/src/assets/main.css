@@ -116,15 +116,6 @@ body {
   flex-shrink: 0;
 }
 
-.strip-toolbar-win {
-  flex-shrink: 0;
-  padding: 5px 8px !important;
-  font-size: 0.6875rem !important;
-  font-weight: 650 !important;
-  letter-spacing: 0.04em;
-}
-
-.strip-toolbar-close {
   flex-shrink: 0;
 }
 
@@ -228,14 +219,16 @@ html.focus-immersive #root {
 .focus-immersive-chrome {
   flex-shrink: 0;
   display: flex;
-  align-items: stretch;
-  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   margin-bottom: 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .focus-drag-strip {
-  flex: 1;
+  flex: 0 0 auto;
+  width: clamp(112px, 28vw, 200px);
   min-height: 40px;
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.24);
@@ -278,28 +271,7 @@ html.focus-immersive #root {
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
-  flex-wrap: wrap;
-}
-
-
-.focus-chrome-win-btn {
-  flex-shrink: 0;
-  font: inherit;
-  cursor: pointer;
-  font-size: 0.6875rem;
-  font-weight: 650;
-  letter-spacing: 0.04em;
-  padding: 8px 10px;
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(24, 24, 27, 0.12);
-  background: rgba(255, 254, 249, 0.92);
-  color: var(--color-primary);
-  box-shadow: 0 2px 8px rgba(24, 24, 27, 0.08);
-
-}
-
-.focus-chrome-win-btn:hover {
-  background: #fffef9;
+  flex-wrap: nowrap;
 }
 
 .sticky-notes-stack.sticky-notes-stack--immersive {
@@ -410,8 +382,8 @@ html.focus-immersive #root {
 
 .focus-celebration-modal {
   position: relative;
-  width: min(340px, calc(100vw - 2 * var(--space-md)));
-  padding: calc(var(--space-lg) + 4px) var(--space-lg) var(--space-lg);
+  width: min(400px, calc(100vw - 2 * var(--space-md)));
+  padding: 0;
   border-radius: calc(var(--radius-lg) + 2px);
   text-align: center;
   background:
@@ -420,12 +392,29 @@ html.focus-immersive #root {
     0 28px 56px rgba(24, 24, 27, 0.28),
     inset 0 1px 0 rgba(255, 255, 255, 0.65);
   border: 1px solid rgba(24, 24, 27, 0.09);
+  overflow: visible;
+}
+
+.focus-celebration-modal-clip {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
   overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.focus-celebration-modal-content {
+  position: relative;
+  z-index: 1;
+  padding: calc(var(--space-lg) + 8px) var(--space-lg) var(--space-lg);
 }
 
 .focus-celebration-confetti {
   position: absolute;
   inset: -20% -10% auto;
+  left: 0;
+  right: 0;
   height: 45%;
   pointer-events: none;
   background-image:
@@ -436,13 +425,19 @@ html.focus-immersive #root {
 }
 
 .focus-celebration-plant {
-  margin: 6px auto 12px;
+  margin: 0 auto 14px;
+  padding: clamp(18px, 5vmin, 28px) 6px 0;
   display: flex;
   justify-content: center;
+  overflow: visible;
+}
+
+.focus-celebration-plant .sticky-plant-slot {
+  overflow: visible;
 }
 
 .focus-celebration-plant .sticky-plant-svg {
-  width: min(7.5rem, 36vmin);
+  width: min(9rem, 44vmin);
   height: auto;
   max-width: 100%;
 }
@@ -670,10 +665,10 @@ html.focus-immersive #root {
   margin-top: 14px;
 }
 
-/** Focus immersion: stack centers in viewport height; SVG + countdown follow window via vmin/max-width. */
+/** Focus immersion: stack centers in viewport height; emphasize card vs empty chrome. */
 .sticky-note--focusImmersive {
-  width: calc(100% - 16px);
-  max-width: min(320px, 100%);
+  width: min(560px, calc(100% - 24px));
+  max-width: min(92vw, 560px);
   margin-left: auto;
   margin-right: auto;
   box-sizing: border-box;
@@ -683,38 +678,47 @@ html.focus-immersive #root {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 10px;
+  gap: clamp(12px, 3vmin, 20px);
   width: 100%;
 }
 
 .sticky-note-main--focusImmersive {
   width: 100%;
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
   text-align: center;
 }
 
 .sticky-note-main--focusImmersive .sticky-note-title {
   margin-top: 4px;
+  font-size: clamp(1.35rem, 5vmin, 2rem);
+  line-height: 1.2;
+}
+
+.sticky-note-main--focusImmersive .sticky-note-timeband {
+  font-size: clamp(0.78rem, 2.8vmin, 0.94rem);
 }
 
 .sticky-clock--focusImmersive {
   width: 100%;
   padding-top: 0;
-  gap: 8px;
+  gap: clamp(8px, 2vmin, 14px);
 }
 
 .sticky-note--focusImmersive .sticky-plant-svg {
-  width: min(5.75rem, 28vmin);
+  width: min(8.5rem, 42vmin);
   height: auto;
   max-width: 100%;
 }
 
 .sticky-note--focusImmersive .sticky-clock-face {
-  width: min(5.75rem, 32vmin);
-  height: min(5.75rem, 32vmin);
+  width: min(11rem, 44vmin);
+  height: min(11rem, 44vmin);
 }
 
 .sticky-note--focusImmersive .sticky-clock-digits {
-  font-size: clamp(0.6875rem, 3.2vmin, 0.82rem);
+  font-size: clamp(0.8rem, 4vmin, 1.125rem);
 }
 
 .sticky-clock {

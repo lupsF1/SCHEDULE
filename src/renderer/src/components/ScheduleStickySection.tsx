@@ -237,13 +237,11 @@ function FocusOverlapPicker({
 function FocusImmersiveChrome({
   onExitFocus,
   pinned,
-  onPinnedChange,
-  onAdjustWindow
+  onPinnedChange
 }: {
   onExitFocus: () => void
   pinned: boolean
   onPinnedChange: (v: boolean) => void
-  onAdjustWindow: (dw: number, dh: number) => Promise<void>
 }): ReactElement {
   return (
     <div className="focus-immersive-chrome">
@@ -259,22 +257,6 @@ function FocusImmersiveChrome({
           />
           <span>置顶</span>
         </label>
-        <button
-          type="button"
-          className="focus-chrome-win-btn"
-          title="缩小窗口"
-          onClick={() => void onAdjustWindow(-40, -40)}
-        >
-          窄
-        </button>
-        <button
-          type="button"
-          className="focus-chrome-win-btn"
-          title="放大窗口"
-          onClick={() => void onAdjustWindow(40, 40)}
-        >
-          宽
-        </button>
         <button type="button" className="focus-exit-btn" onClick={onExitFocus}>
           退出专注
         </button>
@@ -293,7 +275,6 @@ export function ScheduleStickySection({
   focusTotalsMsByItemId,
   pinned,
   onPinnedChange,
-  onAdjustWindow,
   layoutBump = 0
 }: {
   day: string
@@ -305,7 +286,6 @@ export function ScheduleStickySection({
   focusTotalsMsByItemId: Record<string, number>
   pinned: boolean
   onPinnedChange: (v: boolean) => void
-  onAdjustWindow: (dw: number, dh: number) => Promise<void>
   /** Optional: bumps when viewport/root size changes so vmin-based layouts can refresh without remounting. */
   layoutBump?: number
 }): ReactElement {
@@ -400,7 +380,6 @@ export function ScheduleStickySection({
           onExitFocus={exitFocus}
           pinned={pinned}
           onPinnedChange={onPinnedChange}
-          onAdjustWindow={onAdjustWindow}
         />
         <p className="sticky-board-hint app-no-drag">该项已不存在或不在今天，请点击退出专注。</p>
       </section>
@@ -466,7 +445,6 @@ export function ScheduleStickySection({
           onExitFocus={exitFocus}
           pinned={pinned}
           onPinnedChange={onPinnedChange}
-          onAdjustWindow={onAdjustWindow}
         />
       ) : (
         <div className="sticky-board-heading-row app-no-drag">

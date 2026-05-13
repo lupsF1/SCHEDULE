@@ -140,25 +140,6 @@ ipcMain.handle('window:getAlwaysOnTop', (e) => {
   return active.isAlwaysOnTop()
 })
 
-ipcMain.handle(
-  'window:adjustSize',
-  (e, dw: unknown, dh: unknown) => {
-    const win = browserWindowFromEvent(e)
-    if (!win) return null
-    const dW = typeof dw === 'number' && Number.isFinite(dw) ? Math.trunc(dw) : 0
-    const dH = typeof dh === 'number' && Number.isFinite(dh) ? Math.trunc(dh) : 0
-    const b = win.getBounds()
-    const [mw, mh] = win.getMinimumSize()
-    const minW = mw > 0 ? mw : 320
-    const minH = mh > 0 ? mh : 360
-    const nextW = Math.max(minW, b.width + dW)
-    const nextH = Math.max(minH, b.height + dH)
-    const changed = nextW !== b.width || nextH !== b.height
-    win.setBounds({ x: b.x, y: b.y, width: nextW, height: nextH })
-    return { width: nextW, height: nextH, changed }
-  }
-)
-
 ipcMain.handle('window:close', (e) => {
   persistWindowNow()
   const active = browserWindowFromEvent(e)
