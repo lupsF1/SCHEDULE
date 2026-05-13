@@ -15,15 +15,6 @@ function debounce(ms: number, fn: () => void): () => void {
 
 let mainWindow: BrowserWindow | null = null
 
-/**
- * Corkboard background (--cork-bg in renderer). Default is an opaque Electron shell:
- * immersive CSS sets html/body to “transparent”, but Chromium still composites over this
- * color — users see WINDOW_BACKGROUND, not the real desktop behind the window.
- * Enabling BrowserWindow transparency (transparent: true + clear background) can reveal
- * the desktop but may regress native edge resize / hit-testing on some platforms (notably Windows).
- */
-const WINDOW_BACKGROUND = '#cfca9e'
-
 /** Invoking renderer's owning window — never rely solely on BrowserWindow.getFocusedWindow() (menus, overlays, quirks). */
 function browserWindowFromEvent(e: IpcMainInvokeEvent): BrowserWindow | null {
   const fromContents = BrowserWindow.fromWebContents(e.sender)
@@ -61,9 +52,7 @@ function createWindow(): void {
     maximizable: true,
     minimizable: true,
     hasShadow: true,
-    /** See WINDOW_BACKGROUND comment: false keeps dependable frameless edge sizing. */
-    transparent: false,
-    backgroundColor: WINDOW_BACKGROUND,
+    transparent: true,
     alwaysOnTop: persisted.alwaysOnTop,
     autoHideMenuBar: true,
     webPreferences: {

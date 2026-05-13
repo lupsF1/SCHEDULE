@@ -8,6 +8,7 @@ import {
 import type { ScheduledItem, NoteBlock } from '../domain/appData'
 import { sortItemsByStart } from '../domain/appData'
 import { formatFocusAccumulatedCn } from '../domain/focusStats'
+import { isScheduleItemActiveNow } from '../domain/scheduleTime'
 import { FocusImmersiveChrome, StickyScheduleCard } from './ScheduleStickySection'
 import { MdiPanel } from './MdiPanel'
 
@@ -183,6 +184,16 @@ export function FocusMdiWorkspace({
       onPanelsChange(() => createDefaultPanels(zCounter))
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-exit when the focused item's timer ends
+  const exitedRef = useRef(false)
+  useEffect(() => {
+    if (exitedRef.current) return
+    if (!isScheduleItemActiveNow(now, focusedItem)) {
+      exitedRef.current = true
+      onExitFocus()
+    }
+  }, [now, focusedItem, onExitFocus])
 
   // Re-clamp floating panels when layout changes
   useEffect(() => {

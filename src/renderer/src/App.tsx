@@ -12,7 +12,6 @@ import type { MdiPanelState } from './domain/mdiTypes'
 import { ScheduleStickySection } from './components/ScheduleStickySection'
 import { FocusMdiWorkspace } from './components/FocusMdiWorkspace'
 import { FocusCelebrationOverlay, type FocusCelebrationSnapshot } from './components/FocusCelebrationOverlay'
-import { MIN_FOCUS_SESSION_CELEBRATION_MS } from './domain/focusStats'
 import { useWindowResizeBump } from './hooks/useWindowResizeBump'
 import { useCallback, useEffect, useRef, useState, type ReactElement } from 'react'
 
@@ -224,6 +223,15 @@ export default function App(): ReactElement {
     setFocusImmersiveItemId(null)
   }, [])
 
+  // Auto-dismiss celebration after 3 seconds and return to main page
+  useEffect(() => {
+    if (!celebration) return
+    const timer = setTimeout(() => {
+      dismissCelebrationAndExitFocus()
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [celebration, dismissCelebrationAndExitFocus])
+
   const applyFocusImmersiveChange = useCallback(
     (nextId: string | null) => {
       if (nextId === null && celebration) {
@@ -232,14 +240,14 @@ export default function App(): ReactElement {
       }
       if (nextId === null && focusImmersiveItemId) {
         const itemId = focusImmersiveItemId
-        const nonce = focusPlantNonce
+        const nonce = focusPlantNonce ?? crypto.randomUUID()
         const started = sessionStartMsRef.current
         const elapsed = started != null ? Date.now() - started : 0
-        if (elapsed >= MIN_FOCUS_SESSION_CELEBRATION_MS && nonce) {
-          const row = data.scheduledItems.find((i) => i.id === itemId)
-          const dayKey = row?.dayKey ?? day
-          const prevTotal = data.focusTotalsMsByItemId?.[itemId] ?? 0
-          const cumulativeMs = prevTotal + elapsed
+        const row = data.scheduledItems.find((i) => i.id === itemId)
+        const dayKey = row?.dayKey ?? day
+        const prevTotal = data.focusTotalsMsByItemId?.[itemId] ?? 0
+        const cumulativeMs = prevTotal + elapsed
+        if (elapsed > 0) {
           setData((d) => ({
             ...d,
             focusTotalsMsByItemId: {
@@ -247,16 +255,16 @@ export default function App(): ReactElement {
               [itemId]: (d.focusTotalsMsByItemId?.[itemId] ?? 0) + elapsed
             }
           }))
-          setCelebration({
-            itemId,
-            dayKey,
-            nonce,
-            sessionMs: elapsed,
-            cumulativeMs
-          })
-          /** Keep immersive shell until the user closes the overlay. */
-          return
         }
+        setCelebration({
+          itemId,
+          dayKey,
+          nonce,
+          sessionMs: elapsed,
+          cumulativeMs
+        })
+        /** Keep immersive shell until the user closes the overlay. */
+        return
       }
       setFocusImmersiveItemId(nextId)
     },
