@@ -23,20 +23,22 @@
 | 脚手架 | [electron.vite.config.ts](../electron.vite.config.ts)，源码 `src/main`、`src/preload`、`src/renderer`。 |
 | 窗口 | 置顶切换、防抖保存窗口 bounds + 置顶到 `window-state.json`（见 `src/main/index.ts`）。 |
 | 数据 | `app-state.json` 存 `scheduledItems`、`noteBlocks`；渲染进程约 420ms 防抖写入（见 `src/renderer/src/App.tsx`）。 |
-| UI | 「今日时间线」按开始时间排序；可编辑时间与标题；可编辑多版块备忘录；对齐 `DESIGN.md` CSS 变量（`src/renderer/src/assets/main.css`）。 |
+| UI | 便签式时间线：**草稿 → 保存后卡片**；距开始/进行中/已结束文案与 10 分钟内 **秒级倒计时**；备忘区同样便签纸质风（`ScheduleStickySection.tsx`、`scheduleTime.ts`、`main.css`）。 |
 
 ### 关键文件一览
 
 - `src/main/index.ts` — 窗口与 IPC。
 - `src/preload/index.ts` — `window.desktop` 桥。
 - `src/renderer/src/App.tsx` — UI 入口。
-- `src/renderer/src/domain/appData.ts` — 序列化与时间排序。
+- `src/renderer/src/domain/appData.ts` — 序列化与时间排序、`committed`。
+- `src/renderer/src/domain/scheduleTime.ts` — 相位与倒计时文案。
+- `src/renderer/src/components/ScheduleStickySection.tsx` — 时间线条目 UI。
 
 ### 验证记录
 
 - `npm run typecheck`：**通过**。
 - `npm run build`：**通过**。
-- `npm run test`：**通过**（`appData` 解析与时间解析）。
+- `npm run test`：**通过**（`appData` + `scheduleTime`）。
 - `electron-builder` 配置已加入（`npm run dist:win` 等）；完整安装包需在对应操作系统上执行打包（含下载 Electron 二进制）。
 - 未在无显示环境下执行 Electron 预览；置顶与缩放需在图形会话手动确认。
 

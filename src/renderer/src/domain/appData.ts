@@ -6,6 +6,8 @@ export type ScheduledItem = {
   title: string
   startTime: string
   endTime: string | null
+  /** Saved as sticky card UI; drafts use false until user clicks Save */
+  committed?: boolean
 }
 
 export type NoteBlock = {
@@ -35,7 +37,8 @@ export function defaultAppData(): AppDataV1 {
         dayKey: day,
         title: '示例：晨会准备',
         startTime: '09:00',
-        endTime: '09:30'
+        endTime: '09:30',
+        committed: true
       }
     ],
     noteBlocks: [
@@ -75,12 +78,18 @@ export function parseAppData(raw: string | null): AppDataV1 {
 }
 
 function normalizeScheduledItem(x: ScheduledItem): ScheduledItem {
+  const committed =
+    typeof x.committed === 'boolean'
+      ? x.committed
+      : true /* legacy payloads without flag */
+
   return {
     id: typeof x.id === 'string' ? x.id : crypto.randomUUID(),
     dayKey: typeof x.dayKey === 'string' ? x.dayKey : todayKey(),
     title: typeof x.title === 'string' ? x.title : '',
     startTime: typeof x.startTime === 'string' ? x.startTime : '09:00',
-    endTime: typeof x.endTime === 'string' || x.endTime === null ? x.endTime : null
+    endTime: typeof x.endTime === 'string' || x.endTime === null ? x.endTime : null,
+    ...(committed !== true ? { committed } : {})
   }
 }
 
