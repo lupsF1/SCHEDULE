@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { defaultAppData, parseAppData, serializeAppData, timeToMinutes } from './appData'
+import { defaultAppData, parseAppData, serializeAppData, timeToMinutes, formatNoteSavedDayLabel } from './appData'
 
 describe('appData', () => {
   it('timeToMinutes parses HH:mm', () => {
@@ -42,6 +42,21 @@ describe('appData', () => {
     const raw = serializeAppData(withTotals)
     const again = parseAppData(raw)
     expect(again.focusTotalsMsByItemId?.[id]).toBe(120000)
+  })
+
+  it('formatNoteSavedDayLabel renders yyyy-mm-dd in Chinese', () => {
+    expect(formatNoteSavedDayLabel('2026-05-13')).toBe('2026年 05月 13日')
+  })
+
+  it('parse + serialize preserves noteBlock savedDayKey', () => {
+    const d = defaultAppData()
+    const nb = d.noteBlocks[0]!
+    const withDate = {
+      ...d,
+      noteBlocks: [{ ...nb, savedDayKey: '2026-01-02' }]
+    }
+    const again = parseAppData(serializeAppData(withDate))
+    expect(again.noteBlocks[0]!.savedDayKey).toBe('2026-01-02')
   })
 
   it('parseAppData returns defaults for invalid JSON', () => {

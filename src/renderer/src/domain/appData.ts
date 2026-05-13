@@ -14,6 +14,8 @@ export type NoteBlock = {
   id: string
   title: string
   body: string
+  /** Calendar day (yyyy-mm-dd) when the note was last edited / saved. */
+  savedDayKey?: string
 }
 
 export type AppDataV1 = {
@@ -27,6 +29,11 @@ export type AppDataV1 = {
 export function todayKey(date = new Date()): string {
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+export function formatNoteSavedDayLabel(dayKey: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dayKey)) return dayKey
+  return `${dayKey.slice(0, 4)}年 ${dayKey.slice(5, 7)}月 ${dayKey.slice(8, 10)}日`
 }
 
 export function defaultAppData(): AppDataV1 {
@@ -114,11 +121,16 @@ function normalizeScheduledItem(x: ScheduledItem): ScheduledItem {
 }
 
 function normalizeNoteBlock(x: NoteBlock): NoteBlock {
-  return {
+  const savedDayKey =
+    typeof x.savedDayKey === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(x.savedDayKey)
+      ? x.savedDayKey
+      : undefined
+  const base: NoteBlock = {
     id: typeof x.id === 'string' ? x.id : crypto.randomUUID(),
     title: typeof x.title === 'string' ? x.title : '',
     body: typeof x.body === 'string' ? x.body : ''
   }
+  return savedDayKey !== undefined ? { ...base, savedDayKey } : base
 }
 
 export function serializeAppData(data: AppDataV1): string {

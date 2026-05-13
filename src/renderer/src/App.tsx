@@ -285,7 +285,6 @@ export default function App(): ReactElement {
   const totals = data.focusTotalsMsByItemId ?? {}
 
   return (
-    <>
     <div className={`app-shell app-corkboard${focusImmersive ? ' app-shell--focusImmersive' : ''}`}>
       {!focusImmersive ? (
         <>
@@ -343,10 +342,9 @@ export default function App(): ReactElement {
           />
         )}
       </main>
+      {celebration ? (
+        <FocusCelebrationOverlay snapshot={celebration} onDismiss={dismissCelebrationAndExitFocus} />
+      ) : null}
     </div>
-    {celebration ? (
-      <FocusCelebrationOverlay snapshot={celebration} onDismiss={dismissCelebrationAndExitFocus} />
-    ) : null}
-    </>
   )
 }
