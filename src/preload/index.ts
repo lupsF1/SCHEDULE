@@ -9,6 +9,11 @@ const desktop = {
   setAlwaysOnTop: (enabled: boolean): Promise<boolean> =>
     ipcRenderer.invoke('window:setAlwaysOnTop', enabled),
   getAlwaysOnTop: (): Promise<boolean> => ipcRenderer.invoke('window:getAlwaysOnTop'),
+  adjustWindowSize: (
+    dw: number,
+    dh: number
+  ): Promise<{ width: number; height: number } | null> =>
+    ipcRenderer.invoke('window:adjustSize', dw, dh),
   closeWindow: (): Promise<void> => ipcRenderer.invoke('window:close'),
   quitApp: (): Promise<void> => ipcRenderer.invoke('window:quit')
 }

@@ -234,6 +234,55 @@ function FocusOverlapPicker({
   )
 }
 
+function FocusImmersiveChrome({
+  onExitFocus,
+  pinned,
+  onPinnedChange,
+  onAdjustWindow
+}: {
+  onExitFocus: () => void
+  pinned: boolean
+  onPinnedChange: (v: boolean) => void
+  onAdjustWindow: (dw: number, dh: number) => Promise<void>
+}): ReactElement {
+  return (
+    <div className="focus-immersive-chrome">
+      <div className="focus-drag-strip app-drag" title="拖拽移动窗口">
+        <span className="focus-drag-strip-inner" aria-hidden />
+      </div>
+      <div className="focus-chrome-controls app-no-drag">
+        <label className="toolbar-check focus-chrome-pin">
+          <input
+            type="checkbox"
+            checked={pinned}
+            onChange={(e) => void onPinnedChange(e.target.checked)}
+          />
+          <span>置顶</span>
+        </label>
+        <button
+          type="button"
+          className="focus-chrome-win-btn"
+          title="缩小窗口"
+          onClick={() => void onAdjustWindow(-40, -40)}
+        >
+          窄
+        </button>
+        <button
+          type="button"
+          className="focus-chrome-win-btn"
+          title="放大窗口"
+          onClick={() => void onAdjustWindow(40, 40)}
+        >
+          宽
+        </button>
+        <button type="button" className="focus-exit-btn" onClick={onExitFocus}>
+          退出专注
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export function ScheduleStickySection({
   day,
   items,
@@ -241,7 +290,10 @@ export function ScheduleStickySection({
   focusImmersiveItemId,
   onFocusImmersiveChange,
   focusPlantNonce,
-  focusTotalsMsByItemId
+  focusTotalsMsByItemId,
+  pinned,
+  onPinnedChange,
+  onAdjustWindow
 }: {
   day: string
   items: ScheduledItem[]
@@ -250,6 +302,9 @@ export function ScheduleStickySection({
   onFocusImmersiveChange: (id: string | null) => void
   focusPlantNonce: string | null
   focusTotalsMsByItemId: Record<string, number>
+  pinned: boolean
+  onPinnedChange: (v: boolean) => void
+  onAdjustWindow: (dw: number, dh: number) => Promise<void>
 }): ReactElement {
   const todayItems = sortItemsByStart(items.filter((i) => i.dayKey === day))
 
@@ -338,14 +393,12 @@ export function ScheduleStickySection({
   if (immersive && visibleRows.length === 0) {
     return (
       <section className="sticky-board sticky-board--immersive">
-        <div className="focus-immersive-chrome">
-          <div className="focus-drag-strip app-drag" title="拖拽移动窗口">
-            <span className="focus-drag-strip-inner" aria-hidden />
-          </div>
-          <button type="button" className="focus-exit-btn app-no-drag" onClick={exitFocus}>
-            退出专注
-          </button>
-        </div>
+        <FocusImmersiveChrome
+          onExitFocus={exitFocus}
+          pinned={pinned}
+          onPinnedChange={onPinnedChange}
+          onAdjustWindow={onAdjustWindow}
+        />
         <p className="sticky-board-hint app-no-drag">该项已不存在或不在今天，请点击退出专注。</p>
       </section>
     )
@@ -406,14 +459,12 @@ export function ScheduleStickySection({
       ) : null}
 
       {immersive ? (
-        <div className="focus-immersive-chrome">
-          <div className="focus-drag-strip app-drag" title="拖拽移动窗口">
-            <span className="focus-drag-strip-inner" aria-hidden />
-          </div>
-          <button type="button" className="focus-exit-btn app-no-drag" onClick={exitFocus}>
-            退出专注
-          </button>
-        </div>
+        <FocusImmersiveChrome
+          onExitFocus={exitFocus}
+          pinned={pinned}
+          onPinnedChange={onPinnedChange}
+          onAdjustWindow={onAdjustWindow}
+        />
       ) : (
         <div className="sticky-board-heading-row app-no-drag">
           <h2 className="sticky-board-heading">此刻安排</h2>

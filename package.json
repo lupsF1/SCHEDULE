@@ -15,6 +15,7 @@
     "dist:win": "npm run compile && electron-builder --win --publish never",
     "dist:linux": "npm run compile && electron-builder --linux --publish never",
     "preview": "electron-vite preview",
+    "git:push": "bash scripts/git-save-push.sh",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "design:lint": "design.md lint DESIGN.md",

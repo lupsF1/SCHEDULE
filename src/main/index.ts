@@ -15,6 +15,12 @@ function debounce(ms: number, fn: () => void): () => void {
 
 let mainWindow: BrowserWindow | null = null
 
+function targetWindow(): BrowserWindow | null {
+  if (mainWindow && !mainWindow.isDestroyed()) return mainWindow
+  const f = BrowserWindow.getFocusedWindow()
+  return f && !f.isDestroyed() ? f : null
+}
+
 function createWindow(): void {
   const wPath = windowStatePath()
   const persisted = loadWindowState(wPath)
@@ -28,6 +34,9 @@ function createWindow(): void {
     minWidth: 320,
     minHeight: 360,
     show: false,
+    resizable: true,
+    maximizable: true,
+    minimizable: true,
     /** Keep a slim system chrome on Windows — improves hit-testing for draggable regions alongside transparent:false shell content. */
     thickFrame: process.platform === 'win32',
     transparent: true,
@@ -67,8 +76,8 @@ function createWindow(): void {
 }
 
 function persistWindowNow(): void {
-  const active = BrowserWindow.getFocusedWindow() ?? mainWindow
-  if (!active || active.isDestroyed()) return
+  const active = targetWindow()
+  if (!active) return
   saveWindowState(windowStatePath(), {
     bounds: active.getBounds(),
     alwaysOnTop: active.isAlwaysOnTop()
@@ -93,9 +102,9 @@ ipcMain.handle('state:save', (_e, json: unknown) => {
 })
 
 ipcMain.handle('window:setAlwaysOnTop', (_e, enabled: unknown) => {
-  const active = BrowserWindow.getFocusedWindow() ?? mainWindow
+  const active = targetWindow()
   const v = Boolean(enabled)
-  if (active && !active.isDestroyed()) {
+  if (active) {
     active.setAlwaysOnTop(v)
     persistWindowNow()
   }
@@ -103,14 +112,32 @@ ipcMain.handle('window:setAlwaysOnTop', (_e, enabled: unknown) => {
 })
 
 ipcMain.handle('window:getAlwaysOnTop', () => {
-  const active = BrowserWindow.getFocusedWindow() ?? mainWindow
-  if (!active || active.isDestroyed()) return false
+  const active = targetWindow()
+  if (!active) return false
   return active.isAlwaysOnTop()
 })
 
+ipcMain.handle(
+  'window:adjustSize',
+  (_e, dw: unknown, dh: unknown) => {
+    const win = targetWindow()
+    if (!win) return null
+    const dW = typeof dw === 'number' && Number.isFinite(dw) ? Math.trunc(dw) : 0
+    const dH = typeof dh === 'number' && Number.isFinite(dh) ? Math.trunc(dh) : 0
+    const b = win.getBounds()
+    const [mw, mh] = win.getMinimumSize()
+    const minW = mw > 0 ? mw : 320
+    const minH = mh > 0 ? mh : 360
+    const nextW = Math.max(minW, b.width + dW)
+    const nextH = Math.max(minH, b.height + dH)
+    win.setBounds({ x: b.x, y: b.y, width: nextW, height: nextH })
+    return { width: nextW, height: nextH }
+  }
+)
+
 ipcMain.handle('window:close', () => {
   persistWindowNow()
-  const active = BrowserWindow.getFocusedWindow() ?? mainWindow
+  const active = targetWindow()
   active?.close()
 })
 

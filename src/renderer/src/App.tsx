@@ -4,6 +4,7 @@ import {
   serializeAppData,
   defaultAppData,
   todayKey,
+  formatNoteSavedDayLabel,
   type NoteBlock,
   type AppDataV1
 } from './domain/appData'
@@ -16,35 +17,59 @@ function Toolbar({
   pinned,
   onPinnedChange,
   onClose,
-  subtitle
+  subtitle,
+  onAdjustWindow
 }: {
   pinned: boolean
   onPinnedChange: (v: boolean) => void
   onClose: () => void
   subtitle: string
+  onAdjustWindow: (dw: number, dh: number) => Promise<void>
 }): ReactElement {
   return (
-    <header className="toolbar strip-toolbar app-drag">
-      <span className="toolbar-title strip-toolbar-brand">Schedule · {subtitle}</span>
-      <label className="toolbar-check app-no-drag">
-        <input
-          type="checkbox"
-          checked={pinned}
-          onChange={(e) => void onPinnedChange(e.target.checked)}
-        />
-        <span>置顶</span>
-      </label>
-      <button type="button" className="btn-icon-soft app-no-drag" title="收起窗口" onClick={onClose}>
-        −
-      </button>
+    <header className="strip-toolbar app-no-drag">
+      <div className="strip-toolbar-drag app-drag" title="此处拖动窗口">
+        <span className="toolbar-title strip-toolbar-brand">Schedule · {subtitle}</span>
+      </div>
+      <div className="strip-toolbar-controls">
+        <label className="toolbar-check">
+          <input
+            type="checkbox"
+            checked={pinned}
+            onChange={(e) => void onPinnedChange(e.target.checked)}
+          />
+          <span>置顶</span>
+        </label>
+        <button
+          type="button"
+          className="btn-mini btn-mini-ghost strip-toolbar-win"
+          title="缩小窗口（也可用系统边沿拖拽）"
+          onClick={() => void onAdjustWindow(-40, -40)}
+        >
+          窄
+        </button>
+        <button
+          type="button"
+          className="btn-mini btn-mini-ghost strip-toolbar-win"
+          title="放大窗口"
+          onClick={() => void onAdjustWindow(40, 40)}
+        >
+          宽
+        </button>
+        <button type="button" className="btn-icon-soft strip-toolbar-close" title="收起窗口" onClick={onClose}>
+          −
+        </button>
+      </div>
     </header>
   )
 }
 
 function MemoStickySection({
+  day,
   blocks,
   setBlocks
 }: {
+  day: string
   blocks: NoteBlock[]
   setBlocks: (fn: (prev: NoteBlock[]) => NoteBlock[]) => void
 }): ReactElement {
@@ -66,11 +91,20 @@ function MemoStickySection({
                     placeholder="这一块叫什么"
                     onChange={(e) =>
                       setBlocks((prev) =>
-                        prev.map((x) => (x.id === b.id ? { ...x, title: e.target.value } : x))
+                        prev.map((x) =>
+                          x.id === b.id
+                            ? { ...x, title: e.target.value, savedDayKey: day }
+                            : x
+                        )
                       )
                     }
                   />
                 </label>
+                {b.savedDayKey ? (
+                  <p className="memo-saved-date" aria-live="polite">
+                    记下于 {formatNoteSavedDayLabel(b.savedDayKey)}
+                  </p>
+                ) : null}
                 <textarea
                   className="memo-body"
                   aria-label={`${b.title} 正文`}
@@ -78,7 +112,9 @@ function MemoStickySection({
                   placeholder="随手写两句……"
                   onChange={(e) =>
                     setBlocks((prev) =>
-                      prev.map((x) => (x.id === b.id ? { ...x, body: e.target.value } : x))
+                      prev.map((x) =>
+                        x.id === b.id ? { ...x, body: e.target.value, savedDayKey: day } : x
+                      )
                     )
                   }
                 />
@@ -171,8 +207,16 @@ export default function App(): ReactElement {
   useEffect(() => {
     if (!focusImmersiveItemId) return
     const exists = data.scheduledItems.some((i) => i.id === focusImmersiveItemId)
-    if (!exists) setFocusImmersiveItemId(null)
+    if (!exists) {
+      setCelebration(null)
+      setFocusImmersiveItemId(null)
+    }
   }, [data.scheduledItems, focusImmersiveItemId])
+
+  const dismissCelebrationAndExitFocus = useCallback(() => {
+    setCelebration(null)
+    setFocusImmersiveItemId(null)
+  }, [])
 
   const applyFocusImmersiveChange = useCallback(
     (nextId: string | null) => {
@@ -200,6 +244,8 @@ export default function App(): ReactElement {
             sessionMs: elapsed,
             cumulativeMs
           })
+          /** Keep immersive shell until the user closes the overlay. */
+          return
         }
       }
       setFocusImmersiveItemId(nextId)
@@ -220,6 +266,10 @@ export default function App(): ReactElement {
   const onPinnedChange = useCallback(async (next: boolean) => {
     setPinned(next)
     await window.desktop.setAlwaysOnTop(next)
+  }, [])
+
+  const onAdjustWindow = useCallback(async (dw: number, dh: number) => {
+    await window.desktop.adjustWindowSize(dw, dh)
   }, [])
 
   if (!ready) {
@@ -244,6 +294,7 @@ export default function App(): ReactElement {
             onPinnedChange={onPinnedChange}
             onClose={() => void window.desktop.closeWindow()}
             subtitle={dateLabel}
+            onAdjustWindow={onAdjustWindow}
           />
           <div
             className="window-drag-gutter app-drag"
@@ -259,7 +310,9 @@ export default function App(): ReactElement {
           <>
             <div className="window-drag-shim app-drag" aria-hidden />
             <div className="app-main-content app-no-drag">
-              <p className="cork-banner app-no-drag">拖边角改大小 · 勾选置顶 · 「贴上来」后先草稿，保存成便签</p>
+              <p className="cork-banner app-no-drag">
+                拖窗口边沿或点工具栏「宽／窄」调大小 · 置顶与专注顶栏均可勾选 · 「贴上来」后先草稿，保存成便签
+              </p>
               <ScheduleStickySection
                 day={day}
                 items={data.scheduledItems}
@@ -268,8 +321,11 @@ export default function App(): ReactElement {
                 onFocusImmersiveChange={applyFocusImmersiveChange}
                 focusPlantNonce={focusPlantNonce}
                 focusTotalsMsByItemId={totals}
+                pinned={pinned}
+                onPinnedChange={onPinnedChange}
+                onAdjustWindow={onAdjustWindow}
               />
-              <MemoStickySection blocks={data.noteBlocks} setBlocks={setBlocks} />
+              <MemoStickySection day={day} blocks={data.noteBlocks} setBlocks={setBlocks} />
             </div>
           </>
         ) : (
@@ -281,12 +337,15 @@ export default function App(): ReactElement {
             onFocusImmersiveChange={applyFocusImmersiveChange}
             focusPlantNonce={focusPlantNonce}
             focusTotalsMsByItemId={totals}
+            pinned={pinned}
+            onPinnedChange={onPinnedChange}
+            onAdjustWindow={onAdjustWindow}
           />
         )}
       </main>
     </div>
     {celebration ? (
-      <FocusCelebrationOverlay snapshot={celebration} onDismiss={() => setCelebration(null)} />
+      <FocusCelebrationOverlay snapshot={celebration} onDismiss={dismissCelebrationAndExitFocus} />
     ) : null}
     </>
   )

@@ -61,6 +61,11 @@ body {
   height: 100vh;
 }
 
+/** Visible frame hint when not in focus immersive; hidden in immersive to keep transparency clean. */
+.app-shell.app-corkboard:not(.app-shell--focusImmersive) {
+  border: 1px solid rgba(24, 24, 27, 0.12);
+}
+
 .app-corkboard {
   background-color: var(--cork-bg);
   background-image:
@@ -91,10 +96,36 @@ body {
 }
 
 .strip-toolbar-brand {
-  flex: 1;
   font-size: 0.8125rem;
   font-weight: 650;
   letter-spacing: 0.02em;
+}
+
+.strip-toolbar-drag {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+}
+
+.strip-toolbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.strip-toolbar-win {
+  flex-shrink: 0;
+  padding: 5px 8px !important;
+  font-size: 0.6875rem !important;
+  font-weight: 650 !important;
+  letter-spacing: 0.04em;
+}
+
+.strip-toolbar-close {
+  flex-shrink: 0;
 }
 
 .window-drag-gutter {
@@ -169,6 +200,7 @@ html.focus-immersive #root {
 }
 
 .app-shell.app-corkboard.app-shell--focusImmersive {
+  border: none;
   background-color: transparent !important;
   background-image: none !important;
 }
@@ -188,6 +220,7 @@ html.focus-immersive #root {
   align-items: stretch;
   gap: 8px;
   margin-bottom: 10px;
+  flex-wrap: wrap;
 }
 
 .focus-drag-strip {
@@ -226,6 +259,35 @@ html.focus-immersive #root {
 }
 
 .focus-exit-btn:hover {
+  background: #fffef9;
+}
+
+.focus-chrome-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+
+.focus-chrome-win-btn {
+  flex-shrink: 0;
+  font: inherit;
+  cursor: pointer;
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(24, 24, 27, 0.12);
+  background: rgba(255, 254, 249, 0.92);
+  color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(24, 24, 27, 0.08);
+
+}
+
+.focus-chrome-win-btn:hover {
   background: #fffef9;
 }
 
