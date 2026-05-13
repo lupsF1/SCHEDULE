@@ -220,6 +220,10 @@ export default function App(): ReactElement {
 
   const applyFocusImmersiveChange = useCallback(
     (nextId: string | null) => {
+      if (nextId === null && celebration) {
+        dismissCelebrationAndExitFocus()
+        return
+      }
       if (nextId === null && focusImmersiveItemId) {
         const itemId = focusImmersiveItemId
         const nonce = focusPlantNonce
@@ -250,7 +254,15 @@ export default function App(): ReactElement {
       }
       setFocusImmersiveItemId(nextId)
     },
-    [data.focusTotalsMsByItemId, data.scheduledItems, day, focusImmersiveItemId, focusPlantNonce]
+    [
+      celebration,
+      data.focusTotalsMsByItemId,
+      data.scheduledItems,
+      day,
+      dismissCelebrationAndExitFocus,
+      focusImmersiveItemId,
+      focusPlantNonce
+    ]
   )
 
   const setItems = useCallback((fn: (prev: ScheduledItem[]) => ScheduledItem[]) => {
@@ -269,7 +281,16 @@ export default function App(): ReactElement {
   }, [])
 
   const onAdjustWindow = useCallback(async (dw: number, dh: number) => {
-    await window.desktop.adjustWindowSize(dw, dh)
+    try {
+      const r = await window.desktop.adjustWindowSize(dw, dh)
+      if (r != null && !r.changed && dw < 0 && dh < 0) {
+        window.alert(
+          '窗口已是当前允许的最小大小（宽高各约 320×360）。\n请拖拽窗口外侧边缘缩放；若在 Linux 下边沿拖拽无效，可继续用「宽」。'
+        )
+      }
+    } catch (e) {
+      console.error(e)
+    }
   }, [])
 
   if (!ready) {

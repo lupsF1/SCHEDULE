@@ -209,13 +209,24 @@ html.focus-immersive #root {
   background: transparent;
   gap: var(--space-sm);
   justify-content: flex-start;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
 }
 
-.sticky-board--immersive {
+.sticky-board.sticky-board--immersive {
   margin-bottom: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+  justify-content: center;
+  align-items: stretch;
 }
 
 .focus-immersive-chrome {
+  flex-shrink: 0;
   display: flex;
   align-items: stretch;
   gap: 8px;
@@ -291,8 +302,15 @@ html.focus-immersive #root {
   background: #fffef9;
 }
 
-.sticky-notes-stack--immersive {
+.sticky-notes-stack.sticky-notes-stack--immersive {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: safe center;
+  align-items: center;
   gap: 12px;
+  min-height: 0;
+  width: 100%;
 }
 
 .sticky-slot--immersiveOnly {
@@ -543,6 +561,53 @@ html.focus-immersive #root {
   justify-content: flex-end;
   gap: 6px;
   margin-top: 14px;
+}
+
+/** Focus immersion: stack centers in viewport height; SVG + countdown follow window via vmin/max-width. */
+.sticky-note--focusImmersive {
+  width: calc(100% - 16px);
+  max-width: min(320px, 100%);
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
+.sticky-note-layout--focus {
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+}
+
+.sticky-note-main--focusImmersive {
+  width: 100%;
+  text-align: center;
+}
+
+.sticky-note-main--focusImmersive .sticky-note-title {
+  margin-top: 4px;
+}
+
+.sticky-clock--focusImmersive {
+  width: 100%;
+  padding-top: 0;
+  gap: 8px;
+}
+
+.sticky-note--focusImmersive .sticky-plant-svg {
+  width: min(5.75rem, 28vmin);
+  height: auto;
+  max-width: 100%;
+}
+
+.sticky-note--focusImmersive .sticky-clock-face {
+  width: min(5.75rem, 32vmin);
+  height: min(5.75rem, 32vmin);
+}
+
+.sticky-note--focusImmersive .sticky-clock-digits {
+  font-size: clamp(0.6875rem, 3.2vmin, 0.82rem);
 }
 
 .sticky-clock {

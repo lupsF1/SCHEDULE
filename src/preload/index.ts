@@ -12,7 +12,7 @@ const desktop = {
   adjustWindowSize: (
     dw: number,
     dh: number
-  ): Promise<{ width: number; height: number } | null> =>
+  ): Promise<{ width: number; height: number; changed: boolean } | null> =>
     ipcRenderer.invoke('window:adjustSize', dw, dh),
   closeWindow: (): Promise<void> => ipcRenderer.invoke('window:close'),
   quitApp: (): Promise<void> => ipcRenderer.invoke('window:quit')

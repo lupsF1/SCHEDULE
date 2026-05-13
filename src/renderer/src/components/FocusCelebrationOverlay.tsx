@@ -4,7 +4,7 @@ import {
   formatFocusSessionCn
 } from '../domain/focusStats'
 import { StickyPlantGrowth } from './StickyPlantGrowth'
-import { useMemo, type ReactElement } from 'react'
+import { useMemo, useEffect, type ReactElement } from 'react'
 
 export type FocusCelebrationSnapshot = {
   itemId: string
@@ -26,6 +26,17 @@ export function FocusCelebrationOverlay({
     [snapshot.dayKey, snapshot.itemId, snapshot.nonce]
   )
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        onDismiss()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onDismiss])
+
   return (
     <div className="focus-celebration-backdrop app-no-drag" role="presentation">
       <div
@@ -46,7 +57,7 @@ export function FocusCelebrationOverlay({
           累计 {formatFocusAccumulatedCn(snapshot.cumulativeMs)}
         </p>
         <button type="button" className="btn-mini btn-mini-primary focus-celebration-ok" onClick={onDismiss}>
-          知道了
+          知道了，退出专注
         </button>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, type IpcMainInvokeEvent } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { readFileSync, writeFileSync, existsSync } from 'fs'
@@ -14,6 +14,17 @@ function debounce(ms: number, fn: () => void): () => void {
 }
 
 let mainWindow: BrowserWindow | null = null
+
+/** Corkboard background (--cork-bg in renderer). Opaque shell fixes OS edge resize / drag vs transparent Chromium hit-testing. */
+const WINDOW_BACKGROUND = '#cfca9e'
+
+/** Invoking renderer's owning window — never rely solely on BrowserWindow.getFocusedWindow() (menus, overlays, quirks). */
+function browserWindowFromEvent(e: IpcMainInvokeEvent): BrowserWindow | null {
+  const fromContents = BrowserWindow.fromWebContents(e.sender)
+  if (fromContents && !fromContents.isDestroyed()) return fromContents
+  if (mainWindow && !mainWindow.isDestroyed()) return mainWindow
+  return null
+}
 
 function targetWindow(): BrowserWindow | null {
   if (mainWindow && !mainWindow.isDestroyed()) return mainWindow
@@ -34,13 +45,18 @@ function createWindow(): void {
     minWidth: 320,
     minHeight: 360,
     show: false,
+    frame: false,
+    /** Enables native sizing border on Windows (WS_THICKFRAME) with a custom HTML title row. */
+    thickFrame: true,
+    ...(process.platform === 'darwin'
+      ? { titleBarStyle: 'hiddenInset' as const }
+      : {}),
     resizable: true,
     maximizable: true,
     minimizable: true,
-    /** Keep a slim system chrome on Windows — improves hit-testing for draggable regions alongside transparent:false shell content. */
-    thickFrame: process.platform === 'win32',
-    transparent: true,
-    backgroundColor: '#00000000',
+    hasShadow: true,
+    transparent: false,
+    backgroundColor: WINDOW_BACKGROUND,
     alwaysOnTop: persisted.alwaysOnTop,
     autoHideMenuBar: true,
     webPreferences: {
@@ -101,8 +117,8 @@ ipcMain.handle('state:save', (_e, json: unknown) => {
   writeFileSync(appStatePath(), body, 'utf-8')
 })
 
-ipcMain.handle('window:setAlwaysOnTop', (_e, enabled: unknown) => {
-  const active = targetWindow()
+ipcMain.handle('window:setAlwaysOnTop', (e, enabled: unknown) => {
+  const active = browserWindowFromEvent(e)
   const v = Boolean(enabled)
   if (active) {
     active.setAlwaysOnTop(v)
@@ -111,16 +127,16 @@ ipcMain.handle('window:setAlwaysOnTop', (_e, enabled: unknown) => {
   return v
 })
 
-ipcMain.handle('window:getAlwaysOnTop', () => {
-  const active = targetWindow()
+ipcMain.handle('window:getAlwaysOnTop', (e) => {
+  const active = browserWindowFromEvent(e)
   if (!active) return false
   return active.isAlwaysOnTop()
 })
 
 ipcMain.handle(
   'window:adjustSize',
-  (_e, dw: unknown, dh: unknown) => {
-    const win = targetWindow()
+  (e, dw: unknown, dh: unknown) => {
+    const win = browserWindowFromEvent(e)
     if (!win) return null
     const dW = typeof dw === 'number' && Number.isFinite(dw) ? Math.trunc(dw) : 0
     const dH = typeof dh === 'number' && Number.isFinite(dh) ? Math.trunc(dh) : 0
@@ -130,14 +146,15 @@ ipcMain.handle(
     const minH = mh > 0 ? mh : 360
     const nextW = Math.max(minW, b.width + dW)
     const nextH = Math.max(minH, b.height + dH)
+    const changed = nextW !== b.width || nextH !== b.height
     win.setBounds({ x: b.x, y: b.y, width: nextW, height: nextH })
-    return { width: nextW, height: nextH }
+    return { width: nextW, height: nextH, changed }
   }
 )
 
-ipcMain.handle('window:close', () => {
+ipcMain.handle('window:close', (e) => {
   persistWindowNow()
-  const active = targetWindow()
+  const active = browserWindowFromEvent(e)
   active?.close()
 })
 
