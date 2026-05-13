@@ -3,7 +3,8 @@ import { needsLiveSecondTick } from '../domain/scheduleTime'
 import type { ScheduledItem } from '../domain/appData'
 
 /**
- * Minute refresh for all cards; plus 1s refresh only while any item is in the countdown window.
+ * Minute refresh for stale text; plus 1s refresh while any item has a live circular countdown (remainMs &gt; 0).
+ * Polls every 1s to start/stop the second timer promptly when crossing the countdown window.
  */
 export function useScheduleLiveClock(todayCommitted: ScheduledItem[]): number {
   const [tick, setTick] = useState(0)
@@ -34,7 +35,7 @@ export function useScheduleLiveClock(todayCommitted: ScheduledItem[]): number {
     }
 
     sync()
-    const poll = window.setInterval(sync, 15_000) as unknown as number
+    const poll = window.setInterval(sync, 1_000) as unknown as number
     return () => {
       window.clearInterval(poll)
       if (ref.sec !== undefined) window.clearInterval(ref.sec)

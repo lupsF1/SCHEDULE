@@ -133,7 +133,7 @@ export function StickyPlantGrowth({ speciesIndex, progress }: Props): ReactEleme
   const ariaLabel = `${sp.label}（${kindLabel}），生长动画与倒计时同步`
 
   return (
-    <div className="sticky-plant-slot">
+    <div className={`sticky-plant-slot${clamped >= 0.96 ? ' sticky-plant-slot--peak' : ''}`}>
       <svg
         viewBox="0 0 80 94"
         width="76"

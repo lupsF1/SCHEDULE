@@ -181,12 +181,19 @@ export default function App(): ReactElement {
   return (
     <div className={`app-shell app-corkboard${focusImmersive ? ' app-shell--focusImmersive' : ''}`}>
       {!focusImmersive ? (
-        <Toolbar
-          pinned={pinned}
-          onPinnedChange={onPinnedChange}
-          onClose={() => void window.desktop.closeWindow()}
-          subtitle={dateLabel}
-        />
+        <>
+          <Toolbar
+            pinned={pinned}
+            onPinnedChange={onPinnedChange}
+            onClose={() => void window.desktop.closeWindow()}
+            subtitle={dateLabel}
+          />
+          <div
+            className="window-drag-gutter app-drag"
+            title="此处拖动窗口"
+            aria-hidden
+          />
+        </>
       ) : null}
       <main className={`content-pad cork-scroll${focusImmersive ? ' content-pad--focusImmersive' : ''}`}>
         {!focusImmersive ? (

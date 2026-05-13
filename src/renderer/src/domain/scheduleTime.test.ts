@@ -53,11 +53,30 @@ describe('scheduleTime', () => {
     vi.useRealTimers()
   })
 
-  it('needsLiveSecondTick when countdown window', () => {
+  it('needsLiveSecondTick when inside former 10-minute window', () => {
     vi.useFakeTimers()
     vi.setSystemTime(dayTimeToDate('2030-01-15', '09:54'))
     const list = [item({ startTime: '10:00', endTime: null })]
     expect(needsLiveSecondTick(list, new Date())).toBe(true)
+    vi.useRealTimers()
+  })
+
+  it('needsLiveSecondTick when more than 10 minutes remain but clock is shown', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(dayTimeToDate('2030-01-15', '09:00'))
+    const list = [item({ startTime: '10:00', endTime: '11:00' })]
+    expect(needsLiveSecondTick(list, new Date())).toBe(true)
+    vi.useRealTimers()
+  })
+
+  it('needsLiveSecondTick false when no remaining window', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(dayTimeToDate('2030-01-15', '12:00'))
+    const list = [item({ startTime: '10:00', endTime: '11:00' })]
+    expect(needsLiveSecondTick(list, new Date())).toBe(false)
+
+    vi.setSystemTime(dayTimeToDate('2030-01-15', '10:30'))
+    expect(needsLiveSecondTick([item({ startTime: '10:00', endTime: null })], new Date())).toBe(false)
     vi.useRealTimers()
   })
 

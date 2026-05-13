@@ -128,10 +128,11 @@ export function getRemainingMs(now: Date, item: ScheduledItem): number | null {
   return null
 }
 
+/** True when any committed item shows the circular HMS clock (same as remainMs &gt; 0). */
 export function needsLiveSecondTick(todayCommittedItems: ScheduledItem[], now: Date): boolean {
   return todayCommittedItems.some((item) => {
     const ms = getRemainingMs(now, item)
-    return ms != null && ms > 0 && ms <= TEN_MS
+    return ms != null && ms > 0
   })
 }
 

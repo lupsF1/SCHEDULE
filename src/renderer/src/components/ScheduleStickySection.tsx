@@ -214,7 +214,8 @@ export function ScheduleStickySection({
     immersive && focusImmersiveItemId
       ? committedForClock.filter((i) => i.id === focusImmersiveItemId)
       : committedForClock
-  useScheduleLiveClock(clockSource)
+  const tick = useScheduleLiveClock(clockSource)
+  const now = useMemo(() => new Date(), [tick])
 
   const [draftStart, setDraftStart] = useState('10:00')
   const [draftEnd, setDraftEnd] = useState('')
@@ -223,8 +224,6 @@ export function ScheduleStickySection({
   const [composerOpen, setComposerOpen] = useState(false)
   const [overlapPickOpen, setOverlapPickOpen] = useState(false)
   const [overlapCandidates, setOverlapCandidates] = useState<ScheduledItem[]>([])
-
-  const now = new Date()
 
   const visibleRows = useMemo(() => {
     if (!immersive || !focusImmersiveItemId) return todayItems
@@ -293,7 +292,7 @@ export function ScheduleStickySection({
   if (immersive && visibleRows.length === 0) {
     return (
       <section className="sticky-board sticky-board--immersive">
-        <div className="focus-immersive-chrome app-no-drag">
+        <div className="focus-immersive-chrome">
           <div className="focus-drag-strip app-drag" title="拖拽移动窗口">
             <span className="focus-drag-strip-inner" aria-hidden />
           </div>
@@ -358,7 +357,7 @@ export function ScheduleStickySection({
       ) : null}
 
       {immersive ? (
-        <div className="focus-immersive-chrome app-no-drag">
+        <div className="focus-immersive-chrome">
           <div className="focus-drag-strip app-drag" title="拖拽移动窗口">
             <span className="focus-drag-strip-inner" aria-hidden />
           </div>
