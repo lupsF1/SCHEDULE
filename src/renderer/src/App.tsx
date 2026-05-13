@@ -8,7 +8,9 @@ import {
   type AppDataV1
 } from './domain/appData'
 import { ScheduleStickySection } from './components/ScheduleStickySection'
-import { useCallback, useEffect, useState, type ReactElement } from 'react'
+import { FocusCelebrationOverlay, type FocusCelebrationSnapshot } from './components/FocusCelebrationOverlay'
+import { MIN_FOCUS_SESSION_CELEBRATION_MS } from './domain/focusStats'
+import { useCallback, useEffect, useRef, useState, type ReactElement } from 'react'
 
 function Toolbar({
   pinned,
@@ -120,6 +122,8 @@ export default function App(): ReactElement {
   const [pinned, setPinned] = useState(true)
   const [focusImmersiveItemId, setFocusImmersiveItemId] = useState<string | null>(null)
   const [focusPlantNonce, setFocusPlantNonce] = useState<string | null>(null)
+  const [celebration, setCelebration] = useState<FocusCelebrationSnapshot | null>(null)
+  const sessionStartMsRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (focusImmersiveItemId === null) {
@@ -128,6 +132,14 @@ export default function App(): ReactElement {
       setFocusPlantNonce(crypto.randomUUID())
     }
   }, [focusImmersiveItemId])
+
+  useEffect(() => {
+    if (focusImmersiveItemId && focusPlantNonce) {
+      sessionStartMsRef.current = Date.now()
+      return
+    }
+    sessionStartMsRef.current = null
+  }, [focusImmersiveItemId, focusPlantNonce])
 
   useEffect(() => {
     document.documentElement.classList.toggle('focus-immersive', Boolean(focusImmersiveItemId))
@@ -162,6 +174,39 @@ export default function App(): ReactElement {
     if (!exists) setFocusImmersiveItemId(null)
   }, [data.scheduledItems, focusImmersiveItemId])
 
+  const applyFocusImmersiveChange = useCallback(
+    (nextId: string | null) => {
+      if (nextId === null && focusImmersiveItemId) {
+        const itemId = focusImmersiveItemId
+        const nonce = focusPlantNonce
+        const started = sessionStartMsRef.current
+        const elapsed = started != null ? Date.now() - started : 0
+        if (elapsed >= MIN_FOCUS_SESSION_CELEBRATION_MS && nonce) {
+          const row = data.scheduledItems.find((i) => i.id === itemId)
+          const dayKey = row?.dayKey ?? day
+          const prevTotal = data.focusTotalsMsByItemId?.[itemId] ?? 0
+          const cumulativeMs = prevTotal + elapsed
+          setData((d) => ({
+            ...d,
+            focusTotalsMsByItemId: {
+              ...(d.focusTotalsMsByItemId ?? {}),
+              [itemId]: (d.focusTotalsMsByItemId?.[itemId] ?? 0) + elapsed
+            }
+          }))
+          setCelebration({
+            itemId,
+            dayKey,
+            nonce,
+            sessionMs: elapsed,
+            cumulativeMs
+          })
+        }
+      }
+      setFocusImmersiveItemId(nextId)
+    },
+    [data.focusTotalsMsByItemId, data.scheduledItems, day, focusImmersiveItemId, focusPlantNonce]
+  )
+
   const setItems = useCallback((fn: (prev: ScheduledItem[]) => ScheduledItem[]) => {
     setData((d) => ({ ...d, scheduledItems: fn(d.scheduledItems) }))
   }, [])
@@ -187,7 +232,10 @@ export default function App(): ReactElement {
 
   const focusImmersive = focusImmersiveItemId !== null
 
+  const totals = data.focusTotalsMsByItemId ?? {}
+
   return (
+    <>
     <div className={`app-shell app-corkboard${focusImmersive ? ' app-shell--focusImmersive' : ''}`}>
       {!focusImmersive ? (
         <>
@@ -217,8 +265,9 @@ export default function App(): ReactElement {
                 items={data.scheduledItems}
                 setItems={setItems}
                 focusImmersiveItemId={focusImmersiveItemId}
-                onFocusImmersiveChange={setFocusImmersiveItemId}
+                onFocusImmersiveChange={applyFocusImmersiveChange}
                 focusPlantNonce={focusPlantNonce}
+                focusTotalsMsByItemId={totals}
               />
               <MemoStickySection blocks={data.noteBlocks} setBlocks={setBlocks} />
             </div>
@@ -229,11 +278,16 @@ export default function App(): ReactElement {
             items={data.scheduledItems}
             setItems={setItems}
             focusImmersiveItemId={focusImmersiveItemId}
-            onFocusImmersiveChange={setFocusImmersiveItemId}
+            onFocusImmersiveChange={applyFocusImmersiveChange}
             focusPlantNonce={focusPlantNonce}
+            focusTotalsMsByItemId={totals}
           />
         )}
       </main>
     </div>
+    {celebration ? (
+      <FocusCelebrationOverlay snapshot={celebration} onDismiss={() => setCelebration(null)} />
+    ) : null}
+    </>
   )
 }

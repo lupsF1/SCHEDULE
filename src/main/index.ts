@@ -28,6 +28,8 @@ function createWindow(): void {
     minWidth: 320,
     minHeight: 360,
     show: false,
+    /** Keep a slim system chrome on Windows — improves hit-testing for draggable regions alongside transparent:false shell content. */
+    thickFrame: process.platform === 'win32',
     transparent: true,
     backgroundColor: '#00000000',
     alwaysOnTop: persisted.alwaysOnTop,

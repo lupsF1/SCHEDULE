@@ -10,6 +10,7 @@ import {
   isScheduleItemActiveNow,
   listActiveCommittedScheduledItems
 } from '../domain/scheduleTime'
+import { formatFocusAccumulatedCn } from '../domain/focusStats'
 import { useScheduleLiveClock } from '../hooks/useScheduleLiveClock'
 import { StickyPlantGrowth } from './StickyPlantGrowth'
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react'
@@ -98,13 +99,17 @@ function StickyScheduleCard({
   now,
   onEdit,
   onRemove,
-  focusPlantNonce
+  focusPlantNonce,
+  immersive,
+  focusTotalMs
 }: {
   item: ScheduledItem
   now: Date
   onEdit: () => void
   onRemove: () => void
   focusPlantNonce: string | null
+  immersive: boolean
+  focusTotalMs: number
 }): ReactElement {
   const live = getStickyLive(now, item)
   const remainMs = getRemainingMs(now, item)
@@ -122,17 +127,33 @@ function StickyScheduleCard({
 
   const endPart = item.endTime ? `\u2003–\u2003${item.endTime}` : ''
   const timeBand = `${item.startTime}${endPart}`
+  const showCumulative =
+    !immersive && item.committed !== false && focusTotalMs > 0
 
-  return (
-    <article
-      className={`sticky-note sticky-note--${live.stripe} app-no-drag`}
-      aria-label={`便签 ${item.title}`}
+  const clockAside = showClock ? (
+    <aside
+      className={`sticky-clock${immersive ? ' sticky-clock--focusImmersive' : ''}`}
+      aria-live="polite"
     >
-      <div className="sticky-note-accent" aria-hidden />
-      <div className="sticky-note-layout">
-        <div className="sticky-note-main">
-          <div className="sticky-note-timeband">{timeBand}</div>
-          <h2 className="sticky-note-title">{item.title}</h2>
+      {growth != null ? (
+        <StickyPlantGrowth speciesIndex={plantSpecies} progress={growth} />
+      ) : null}
+      {immersive ? null : <span className="sticky-clock-label">{clockLabel}</span>}
+      <div className="sticky-clock-face">
+        <span className="sticky-clock-digits">{formatHMS(remainMs!)}</span>
+      </div>
+    </aside>
+  ) : null
+
+  const mainBlock = (
+    <div className={`sticky-note-main${immersive ? ' sticky-note-main--focusImmersive' : ''}`}>
+      <div className="sticky-note-timeband">{timeBand}</div>
+      {showCumulative ? (
+        <p className="sticky-note-focus-total">累计专注 · {formatFocusAccumulatedCn(focusTotalMs)}</p>
+      ) : null}
+      <h2 className="sticky-note-title">{item.title}</h2>
+      {immersive ? null : (
+        <>
           <p className="sticky-note-line">{live.line}</p>
           <div className="sticky-note-actions">
             <button type="button" className="btn-icon" title="编辑" onClick={onEdit}>
@@ -142,18 +163,31 @@ function StickyScheduleCard({
               删
             </button>
           </div>
-        </div>
-        {showClock ? (
-          <aside className="sticky-clock" aria-live="polite">
-            {growth != null ? (
-              <StickyPlantGrowth speciesIndex={plantSpecies} progress={growth} />
-            ) : null}
-            <span className="sticky-clock-label">{clockLabel}</span>
-            <div className="sticky-clock-face">
-              <span className="sticky-clock-digits">{formatHMS(remainMs!)}</span>
-            </div>
-          </aside>
-        ) : null}
+        </>
+      )}
+    </div>
+  )
+
+  return (
+    <article
+      className={`sticky-note sticky-note--${live.stripe} app-no-drag${immersive ? ' sticky-note--focusImmersive' : ''}`}
+      aria-label={`便签 ${item.title}`}
+    >
+      <div className="sticky-note-accent" aria-hidden />
+      <div
+        className={`sticky-note-layout${immersive ? ' sticky-note-layout--focus' : ''}`}
+      >
+        {immersive ? (
+          <>
+            {clockAside}
+            {mainBlock}
+          </>
+        ) : (
+          <>
+            {mainBlock}
+            {clockAside}
+          </>
+        )}
       </div>
     </article>
   )
@@ -206,7 +240,8 @@ export function ScheduleStickySection({
   setItems,
   focusImmersiveItemId,
   onFocusImmersiveChange,
-  focusPlantNonce
+  focusPlantNonce,
+  focusTotalsMsByItemId
 }: {
   day: string
   items: ScheduledItem[]
@@ -214,6 +249,7 @@ export function ScheduleStickySection({
   focusImmersiveItemId: string | null
   onFocusImmersiveChange: (id: string | null) => void
   focusPlantNonce: string | null
+  focusTotalsMsByItemId: Record<string, number>
 }): ReactElement {
   const todayItems = sortItemsByStart(items.filter((i) => i.dayKey === day))
 
@@ -342,6 +378,8 @@ export function ScheduleStickySection({
             item={row}
             now={now}
             focusPlantNonce={focusPlantNonce}
+            immersive={immersive && focusImmersiveItemId === row.id}
+            focusTotalMs={focusTotalsMsByItemId[row.id] ?? 0}
             onEdit={() => setEditingId(row.id)}
             onRemove={() => removeItem(row.id)}
           />

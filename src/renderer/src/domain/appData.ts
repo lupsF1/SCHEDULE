@@ -20,6 +20,8 @@ export type AppDataV1 = {
   version: 1
   scheduledItems: ScheduledItem[]
   noteBlocks: NoteBlock[]
+  /** Cumulative focused session time per schedule item id (ms). Optional for legacy payloads. */
+  focusTotalsMsByItemId?: Record<string, number>
 }
 
 export function todayKey(date = new Date()): string {
@@ -31,6 +33,7 @@ export function defaultAppData(): AppDataV1 {
   const day = todayKey()
   return {
     version: 1,
+    focusTotalsMsByItemId: {},
     scheduledItems: [
       {
         id: crypto.randomUUID(),
@@ -67,14 +70,31 @@ export function parseAppData(raw: string | null): AppDataV1 {
     if (o.version !== 1 || !Array.isArray(o.scheduledItems) || !Array.isArray(o.noteBlocks)) {
       return defaultAppData()
     }
-    return {
-      version: 1,
+    const base = {
+      version: 1 as const,
       scheduledItems: o.scheduledItems.map(normalizeScheduledItem),
       noteBlocks: o.noteBlocks.map(normalizeNoteBlock)
     }
+    const extras = normalizeFocusTotalsField(o.focusTotalsMsByItemId)
+    return { ...base, ...extras }
   } catch {
     return defaultAppData()
   }
+}
+
+function normalizeFocusTotalsField(
+  raw: unknown
+): { focusTotalsMsByItemId: Record<string, number> } | Record<string, never> {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return {}
+  }
+  const out: Record<string, number> = {}
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+    const n =
+      typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.floor(v)) : null
+    if (n !== null && n > 0) out[k] = n
+  }
+  return Object.keys(out).length ? { focusTotalsMsByItemId: out } : {}
 }
 
 function normalizeScheduledItem(x: ScheduledItem): ScheduledItem {
@@ -102,5 +122,14 @@ function normalizeNoteBlock(x: NoteBlock): NoteBlock {
 }
 
 export function serializeAppData(data: AppDataV1): string {
-  return JSON.stringify(data, null, 2)
+  return JSON.stringify(
+    {
+      version: data.version,
+      scheduledItems: data.scheduledItems,
+      noteBlocks: data.noteBlocks,
+      focusTotalsMsByItemId: data.focusTotalsMsByItemId ?? {}
+    },
+    null,
+    2
+  )
 }
