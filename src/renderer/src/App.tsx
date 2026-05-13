@@ -118,6 +118,16 @@ export default function App(): ReactElement {
   const [data, setData] = useState<AppDataV1>(() => defaultAppData())
   const [ready, setReady] = useState(false)
   const [pinned, setPinned] = useState(true)
+  const [focusImmersiveItemId, setFocusImmersiveItemId] = useState<string | null>(null)
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('focus-immersive', Boolean(focusImmersiveItemId))
+    document.body.classList.toggle('focus-immersive', Boolean(focusImmersiveItemId))
+    return () => {
+      document.documentElement.classList.remove('focus-immersive')
+      document.body.classList.remove('focus-immersive')
+    }
+  }, [focusImmersiveItemId])
 
   useEffect(() => {
     ;(async () => {
@@ -136,6 +146,12 @@ export default function App(): ReactElement {
     }, 420)
     return () => clearTimeout(timer)
   }, [data, ready])
+
+  useEffect(() => {
+    if (!focusImmersiveItemId) return
+    const exists = data.scheduledItems.some((i) => i.id === focusImmersiveItemId)
+    if (!exists) setFocusImmersiveItemId(null)
+  }, [data.scheduledItems, focusImmersiveItemId])
 
   const setItems = useCallback((fn: (prev: ScheduledItem[]) => ScheduledItem[]) => {
     setData((d) => ({ ...d, scheduledItems: fn(d.scheduledItems) }))
@@ -160,18 +176,30 @@ export default function App(): ReactElement {
     )
   }
 
+  const focusImmersive = focusImmersiveItemId !== null
+
   return (
-    <div className="app-shell app-corkboard">
-      <Toolbar
-        pinned={pinned}
-        onPinnedChange={onPinnedChange}
-        onClose={() => void window.desktop.closeWindow()}
-        subtitle={dateLabel}
-      />
-      <main className="content-pad cork-scroll">
-        <p className="cork-banner app-no-drag">拖边角改大小 · 勾选置顶 · 「贴上来」后先草稿，保存成便签</p>
-        <ScheduleStickySection day={day} items={data.scheduledItems} setItems={setItems} />
-        <MemoStickySection blocks={data.noteBlocks} setBlocks={setBlocks} />
+    <div className={`app-shell app-corkboard${focusImmersive ? ' app-shell--focusImmersive' : ''}`}>
+      {!focusImmersive ? (
+        <Toolbar
+          pinned={pinned}
+          onPinnedChange={onPinnedChange}
+          onClose={() => void window.desktop.closeWindow()}
+          subtitle={dateLabel}
+        />
+      ) : null}
+      <main className={`content-pad cork-scroll${focusImmersive ? ' content-pad--focusImmersive' : ''}`}>
+        {!focusImmersive ? (
+          <p className="cork-banner app-no-drag">拖边角改大小 · 勾选置顶 · 「贴上来」后先草稿，保存成便签</p>
+        ) : null}
+        <ScheduleStickySection
+          day={day}
+          items={data.scheduledItems}
+          setItems={setItems}
+          focusImmersiveItemId={focusImmersiveItemId}
+          onFocusImmersiveChange={setFocusImmersiveItemId}
+        />
+        {!focusImmersive ? <MemoStickySection blocks={data.noteBlocks} setBlocks={setBlocks} /> : null}
       </main>
     </div>
   )

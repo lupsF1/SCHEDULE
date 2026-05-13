@@ -28,6 +28,8 @@ function createWindow(): void {
     minWidth: 320,
     minHeight: 360,
     show: false,
+    transparent: true,
+    backgroundColor: '#00000000',
     alwaysOnTop: persisted.alwaysOnTop,
     autoHideMenuBar: true,
     webPreferences: {

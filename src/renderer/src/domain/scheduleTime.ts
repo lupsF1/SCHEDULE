@@ -1,4 +1,4 @@
-import type { ScheduledItem } from './appData'
+import { sortItemsByStart, type ScheduledItem } from './appData'
 
 export function dayTimeToDate(dayKey: string, hhmm: string): Date {
   const [ys = '0', mos = '0', ds = '0'] = dayKey.split('-')
@@ -113,6 +113,69 @@ export function getStickyLive(now: Date, item: ScheduledItem): StickyLive {
   return { stripe: 'past', line: '已结束', showCountdown: false, countdownText: '' }
 }
 
+/** Milliseconds until the next ticking deadline — start time (before begin) or end time (during interval). */
+export function getRemainingMs(now: Date, item: ScheduledItem): number | null {
+  const nowMs = now.getTime()
+  const startMs = dayTimeToDate(item.dayKey, item.startTime).getTime()
+  const endMs = item.endTime ? dayTimeToDate(item.dayKey, item.endTime).getTime() : null
+
+  if (endMs !== null && nowMs >= endMs) return null
+
+  if (nowMs < startMs) return startMs - nowMs
+
+  if (endMs !== null && nowMs >= startMs && nowMs < endMs) return endMs - nowMs
+
+  return null
+}
+
 export function needsLiveSecondTick(todayCommittedItems: ScheduledItem[], now: Date): boolean {
-  return todayCommittedItems.some((item) => getStickyLive(now, item).showCountdown)
+  return todayCommittedItems.some((item) => {
+    const ms = getRemainingMs(now, item)
+    return ms != null && ms > 0 && ms <= TEN_MS
+  })
+}
+
+/**
+ * Relative growth toward the current ticking deadline — 开满时为 1（与环形倒计时对齐）。
+ * 等待开始：自当日 00:00 起至正式开始；进行中：自开始到结束。
+ */
+export function getPlantGrowthFraction(now: Date, item: ScheduledItem): number | null {
+  if (getRemainingMs(now, item) == null) return null
+
+  const nowMs = now.getTime()
+  const startMs = dayTimeToDate(item.dayKey, item.startTime).getTime()
+  const endMs = item.endTime ? dayTimeToDate(item.dayKey, item.endTime).getTime() : null
+  const dayStartMs = dayTimeToDate(item.dayKey, '00:00').getTime()
+
+  if (nowMs < startMs) {
+    const span = Math.max(1, startMs - dayStartMs)
+    return clamp01((nowMs - dayStartMs) / span)
+  }
+
+  if (endMs != null && nowMs >= startMs && nowMs < endMs) {
+    const span = Math.max(1, endMs - startMs)
+    return clamp01((nowMs - startMs) / span)
+  }
+
+  return null
+}
+
+function clamp01(x: number): number {
+  return Math.min(1, Math.max(0, x))
+}
+
+/** 当前是否处于条目时间窗内的「进行中」状态（专注沉浸式等） */
+export function isScheduleItemActiveNow(now: Date, item: ScheduledItem): boolean {
+  return getStickyLive(now, item).stripe === 'active'
+}
+
+/** 当日已提交且正在进行中的条目（可用于专注重叠选择）。 */
+export function listActiveCommittedScheduledItems(
+  now: Date,
+  items: ScheduledItem[],
+  dayKey: string
+): ScheduledItem[] {
+  return sortItemsByStart(
+    items.filter((i) => i.dayKey === dayKey && i.committed !== false && isScheduleItemActiveNow(now, i))
+  )
 }
