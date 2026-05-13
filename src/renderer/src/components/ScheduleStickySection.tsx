@@ -94,7 +94,7 @@ function StickyScheduleEditor({
   )
 }
 
-function StickyScheduleCard({
+export function StickyScheduleCard({
   item,
   now,
   onEdit,
@@ -234,7 +234,7 @@ function FocusOverlapPicker({
   )
 }
 
-function FocusImmersiveChrome({
+export function FocusImmersiveChrome({
   onExitFocus,
   pinned,
   onPinnedChange

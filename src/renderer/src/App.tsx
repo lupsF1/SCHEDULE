@@ -8,7 +8,9 @@ import {
   type NoteBlock,
   type AppDataV1
 } from './domain/appData'
+import type { MdiPanelState } from './domain/mdiTypes'
 import { ScheduleStickySection } from './components/ScheduleStickySection'
+import { FocusMdiWorkspace } from './components/FocusMdiWorkspace'
 import { FocusCelebrationOverlay, type FocusCelebrationSnapshot } from './components/FocusCelebrationOverlay'
 import { MIN_FOCUS_SESSION_CELEBRATION_MS } from './domain/focusStats'
 import { useWindowResizeBump } from './hooks/useWindowResizeBump'
@@ -144,6 +146,8 @@ export default function App(): ReactElement {
   const [focusPlantNonce, setFocusPlantNonce] = useState<string | null>(null)
   const [celebration, setCelebration] = useState<FocusCelebrationSnapshot | null>(null)
   const sessionStartMsRef = useRef<number | null>(null)
+  const [mdiPanels, setMdiPanels] = useState<MdiPanelState[]>([])
+  const [mdiZCounter, setMdiZCounter] = useState(100)
 
   useEffect(() => {
     if (focusImmersiveItemId === null) {
@@ -160,6 +164,24 @@ export default function App(): ReactElement {
     }
     sessionStartMsRef.current = null
   }, [focusImmersiveItemId, focusPlantNonce])
+
+  // Clear MDI panels when exiting focus mode
+  useEffect(() => {
+    if (focusImmersiveItemId === null) {
+      setMdiPanels([])
+      setMdiZCounter(100)
+    }
+  }, [focusImmersiveItemId])
+
+  const bringToFront = useCallback((panelId: string) => {
+    setMdiZCounter((z) => {
+      const nextZ = z + 1
+      setMdiPanels((prev) =>
+        prev.map((p) => (p.id === panelId ? { ...p, z: nextZ } : p))
+      )
+      return nextZ
+    })
+  }, [])
 
   useEffect(() => {
     document.documentElement.classList.toggle('focus-immersive', Boolean(focusImmersiveItemId))
@@ -276,6 +298,13 @@ export default function App(): ReactElement {
 
   const totals = data.focusTotalsMsByItemId ?? {}
 
+  const focusedItem = focusImmersiveItemId
+    ? data.scheduledItems.find((i) => i.id === focusImmersiveItemId) ?? null
+    : null
+  const otherItems = focusImmersiveItemId
+    ? data.scheduledItems.filter((i) => i.id !== focusImmersiveItemId)
+    : data.scheduledItems
+
   return (
     <div className={`app-shell app-corkboard${focusImmersive ? ' app-shell--focusImmersive' : ''}`}>
       {!focusImmersive ? (
@@ -318,20 +347,26 @@ export default function App(): ReactElement {
               <MemoStickySection day={day} blocks={data.noteBlocks} setBlocks={setBlocks} />
             </div>
           </>
-        ) : (
-          <ScheduleStickySection
-            day={day}
-            items={data.scheduledItems}
-            setItems={setItems}
-            focusImmersiveItemId={focusImmersiveItemId}
-            onFocusImmersiveChange={applyFocusImmersiveChange}
+        ) : focusedItem ? (
+          <FocusMdiWorkspace
+            panels={mdiPanels}
+            onPanelsChange={setMdiPanels}
+            zCounter={mdiZCounter}
+            onBringToFront={bringToFront}
+            focusedItem={focusedItem}
+            now={new Date()}
             focusPlantNonce={focusPlantNonce}
-            focusTotalsMsByItemId={totals}
+            focusTotalMs={totals[focusedItem.id] ?? 0}
             pinned={pinned}
             onPinnedChange={onPinnedChange}
+            onExitFocus={() => applyFocusImmersiveChange(null)}
             layoutBump={layoutBump}
+            otherItems={otherItems}
+            memoBlocks={data.noteBlocks}
+            onMemoBlocksChange={setBlocks}
+            day={day}
           />
-        )}
+        ) : null}
       </main>
       {celebration ? (
         <FocusCelebrationOverlay snapshot={celebration} onDismiss={dismissCelebrationAndExitFocus} />
