@@ -118,6 +118,10 @@ Corners stay modestly rounded (`{rounded.sm}`–`{rounded.lg}`) for a pragmatic 
 
 Primary actions use `{components.button-primary}`; secondary and quiet actions use `{components.button-secondary}`. Content groups use `{components.card}` with internal spacing from `{spacing.md}`.
 
+## Electron window & transparency
+
+The main BrowserWindow defaults to **opaque** (`transparent: false`) with an earth-toned `backgroundColor` so frameless resizing and drag hit-testing stay reliable (especially Windows). Renderer “immersive focus” clears the corkboard visuals but **cannot show the literal desktop through the window**: that composite still sits above the Electron window backdrop. True desktop see-through requires `transparent: true` plus a fully clear background at the Electron layer, traded against possible edge-zoom / sizing quirks across OSes — product and QA should gate that flip.
+
 ## Do's and Don'ts
 
 - Do use emerald `#047857` with white label text only on primary actions.

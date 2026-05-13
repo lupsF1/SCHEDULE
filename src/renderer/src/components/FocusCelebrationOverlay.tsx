@@ -5,6 +5,7 @@ import {
 } from '../domain/focusStats'
 import { StickyPlantGrowth } from './StickyPlantGrowth'
 import { useMemo, useEffect, type ReactElement } from 'react'
+import { createPortal } from 'react-dom'
 
 export type FocusCelebrationSnapshot = {
   itemId: string
@@ -37,7 +38,7 @@ export function FocusCelebrationOverlay({
     return () => window.removeEventListener('keydown', onKey)
   }, [onDismiss])
 
-  return (
+  const overlay = (
     <div className="focus-celebration-backdrop app-no-drag" role="presentation">
       <div
         className="focus-celebration-modal"
@@ -62,4 +63,6 @@ export function FocusCelebrationOverlay({
       </div>
     </div>
   )
+
+  return createPortal(overlay, document.body)
 }

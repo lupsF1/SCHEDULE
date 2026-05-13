@@ -293,7 +293,8 @@ export function ScheduleStickySection({
   focusTotalsMsByItemId,
   pinned,
   onPinnedChange,
-  onAdjustWindow
+  onAdjustWindow,
+  layoutBump = 0
 }: {
   day: string
   items: ScheduledItem[]
@@ -305,6 +306,8 @@ export function ScheduleStickySection({
   pinned: boolean
   onPinnedChange: (v: boolean) => void
   onAdjustWindow: (dw: number, dh: number) => Promise<void>
+  /** Optional: bumps when viewport/root size changes so vmin-based layouts can refresh without remounting. */
+  layoutBump?: number
 }): ReactElement {
   const todayItems = sortItemsByStart(items.filter((i) => i.dayKey === day))
 
@@ -316,7 +319,7 @@ export function ScheduleStickySection({
       ? committedForClock.filter((i) => i.id === focusImmersiveItemId)
       : committedForClock
   const tick = useScheduleLiveClock(clockSource)
-  const now = useMemo(() => new Date(), [tick])
+  const now = useMemo(() => new Date(), [tick, layoutBump])
 
   const [draftStart, setDraftStart] = useState('10:00')
   const [draftEnd, setDraftEnd] = useState('')

@@ -11,6 +11,7 @@ import {
 import { ScheduleStickySection } from './components/ScheduleStickySection'
 import { FocusCelebrationOverlay, type FocusCelebrationSnapshot } from './components/FocusCelebrationOverlay'
 import { MIN_FOCUS_SESSION_CELEBRATION_MS } from './domain/focusStats'
+import { useWindowResizeBump } from './hooks/useWindowResizeBump'
 import { useCallback, useEffect, useRef, useState, type ReactElement } from 'react'
 
 function Toolbar({
@@ -144,6 +145,7 @@ function MemoStickySection({
 }
 
 export default function App(): ReactElement {
+  const layoutBump = useWindowResizeBump()
   const [, bumpClock] = useState(0)
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -324,7 +326,7 @@ export default function App(): ReactElement {
         </>
       ) : null}
       <main
-        className={`content-pad cork-scroll${focusImmersive ? ' content-pad--focusImmersive' : ' content-pad--with-drag-shim'}`}
+        className={`content-pad cork-scroll${focusImmersive ? ' content-pad--focusImmersive cork-scroll--focusImmersive' : ' content-pad--with-drag-shim'}`}
       >
         {!focusImmersive ? (
           <>
@@ -344,6 +346,7 @@ export default function App(): ReactElement {
                 pinned={pinned}
                 onPinnedChange={onPinnedChange}
                 onAdjustWindow={onAdjustWindow}
+                layoutBump={layoutBump}
               />
               <MemoStickySection day={day} blocks={data.noteBlocks} setBlocks={setBlocks} />
             </div>
@@ -360,6 +363,7 @@ export default function App(): ReactElement {
             pinned={pinned}
             onPinnedChange={onPinnedChange}
             onAdjustWindow={onAdjustWindow}
+            layoutBump={layoutBump}
           />
         )}
       </main>
