@@ -16,4 +16,12 @@ describe('stickyPlantKinds', () => {
     expect(pickStickyPlantSpeciesIndex('task-uuid-1')).toBe(pickStickyPlantSpeciesIndex('task-uuid-1'))
     expect(pickStickyPlantSpeciesIndex('task-uuid-1')).not.toBe(pickStickyPlantSpeciesIndex('task-uuid-2'))
   })
+
+  it('pickStickyPlantSpeciesIndex can vary with session suffix (focus replant)', () => {
+    const base = 'same-id\u0378same-day'
+    const indices = ['idle', 'sess-a', 'sess-b', 'sess-c'].map((suf) =>
+      pickStickyPlantSpeciesIndex(`${base}\u0378${suf}`)
+    )
+    expect(new Set(indices).size).toBeGreaterThanOrEqual(2)
+  })
 })

@@ -97,18 +97,26 @@ function StickyScheduleCard({
   item,
   now,
   onEdit,
-  onRemove
+  onRemove,
+  focusPlantNonce
 }: {
   item: ScheduledItem
   now: Date
   onEdit: () => void
   onRemove: () => void
+  focusPlantNonce: string | null
 }): ReactElement {
   const live = getStickyLive(now, item)
   const remainMs = getRemainingMs(now, item)
   const showClock = remainMs != null && remainMs > 0
   const growth = getPlantGrowthFraction(now, item)
-  const plantSpecies = useMemo(() => pickStickyPlantSpeciesIndex(`${item.id}\u0378${item.dayKey}`), [item.dayKey, item.id])
+  const plantSpecies = useMemo(
+    () =>
+      pickStickyPlantSpeciesIndex(
+        `${item.id}\u0378${item.dayKey}\u0378${focusPlantNonce ?? 'idle'}`
+      ),
+    [item.dayKey, item.id, focusPlantNonce]
+  )
   const clockLabel =
     now.getTime() < dayTimeToDate(item.dayKey, item.startTime).getTime() ? '距开始' : '剩余'
 
@@ -197,13 +205,15 @@ export function ScheduleStickySection({
   items,
   setItems,
   focusImmersiveItemId,
-  onFocusImmersiveChange
+  onFocusImmersiveChange,
+  focusPlantNonce
 }: {
   day: string
   items: ScheduledItem[]
   setItems: (fn: (prev: ScheduledItem[]) => ScheduledItem[]) => void
   focusImmersiveItemId: string | null
   onFocusImmersiveChange: (id: string | null) => void
+  focusPlantNonce: string | null
 }): ReactElement {
   const todayItems = sortItemsByStart(items.filter((i) => i.dayKey === day))
 
@@ -331,6 +341,7 @@ export function ScheduleStickySection({
           <StickyScheduleCard
             item={row}
             now={now}
+            focusPlantNonce={focusPlantNonce}
             onEdit={() => setEditingId(row.id)}
             onRemove={() => removeItem(row.id)}
           />
@@ -396,7 +407,7 @@ export function ScheduleStickySection({
           {!composerOpen ? (
             <button
               type="button"
-              className="sticky-composer-fab"
+              className="sticky-composer-fab app-no-drag"
               aria-expanded={false}
               aria-label="展开再加一张备忘"
               onClick={() => setComposerOpen(true)}
@@ -404,7 +415,7 @@ export function ScheduleStickySection({
               +
             </button>
           ) : (
-            <div className="sticky-composer sticky-note sticky-note--sheet sticky-composer-panel">
+            <div className="sticky-composer sticky-note sticky-note--sheet sticky-composer-panel app-no-drag">
               <div className="sticky-composer-header">
                 <span className="sticky-composer-caption">再加一张</span>
                 <button

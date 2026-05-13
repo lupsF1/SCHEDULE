@@ -99,10 +99,11 @@ body {
 
 .window-drag-gutter {
   flex-shrink: 0;
-  height: 12px;
+  height: 16px;
   width: 100%;
-  background: rgba(254, 252, 246, 0.35);
-  border-bottom: 1px solid rgba(24, 24, 27, 0.06);
+  background: rgba(254, 252, 246, 0.22);
+  border-bottom: 1px solid rgba(24, 24, 27, 0.08);
+  backdrop-filter: blur(4px);
 }
 
 .toolbar-check {
@@ -140,6 +141,27 @@ body {
   min-height: 0;
 }
 
+.content-pad--with-drag-shim {
+  position: relative;
+}
+
+.window-drag-shim {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+}
+
+.app-main-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  flex: 1;
+  min-height: 0;
+}
+
 html.focus-immersive,
 html.focus-immersive body,
 html.focus-immersive #root {
@@ -170,10 +192,11 @@ html.focus-immersive #root {
 
 .focus-drag-strip {
   flex: 1;
-  min-height: 32px;
+  min-height: 40px;
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -317,6 +340,11 @@ html.focus-immersive #root {
 
 .memo-board {
   margin-top: var(--space-sm);
+  -webkit-app-region: no-drag;
+}
+
+.memo-title-wrap {
+  -webkit-app-region: no-drag;
 }
 
 .sticky-board-heading-row {
@@ -643,6 +671,7 @@ html.focus-immersive #root {
   background: rgba(255, 255, 255, 0.8);
   padding: 9px 10px;
   color: var(--color-primary);
+  -webkit-app-region: no-drag;
 }
 
 .sticky-input-time {
@@ -801,6 +830,7 @@ html.focus-immersive #root {
   color: var(--color-primary);
   border-bottom: 1px dashed rgba(24, 24, 27, 0.14);
   margin-bottom: 10px;
+  -webkit-app-region: no-drag;
 }
 
 .memo-body {
@@ -812,6 +842,7 @@ html.focus-immersive #root {
   font: inherit;
   line-height: 1.55;
   color: rgba(39, 39, 42, 0.95);
+  -webkit-app-region: no-drag;
 }
 
 .memo-body:focus,

@@ -47,7 +47,7 @@ function MemoStickySection({
   setBlocks: (fn: (prev: NoteBlock[]) => NoteBlock[]) => void
 }): ReactElement {
   return (
-    <section className="sticky-board memo-board">
+    <section className="sticky-board memo-board app-no-drag">
       <h2 className="sticky-board-heading">纸片备忘</h2>
       <div className="memo-stack">
         {blocks.map((b, idx) => {
@@ -119,6 +119,15 @@ export default function App(): ReactElement {
   const [ready, setReady] = useState(false)
   const [pinned, setPinned] = useState(true)
   const [focusImmersiveItemId, setFocusImmersiveItemId] = useState<string | null>(null)
+  const [focusPlantNonce, setFocusPlantNonce] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (focusImmersiveItemId === null) {
+      setFocusPlantNonce(null)
+    } else {
+      setFocusPlantNonce(crypto.randomUUID())
+    }
+  }, [focusImmersiveItemId])
 
   useEffect(() => {
     document.documentElement.classList.toggle('focus-immersive', Boolean(focusImmersiveItemId))
@@ -195,18 +204,35 @@ export default function App(): ReactElement {
           />
         </>
       ) : null}
-      <main className={`content-pad cork-scroll${focusImmersive ? ' content-pad--focusImmersive' : ''}`}>
+      <main
+        className={`content-pad cork-scroll${focusImmersive ? ' content-pad--focusImmersive' : ' content-pad--with-drag-shim'}`}
+      >
         {!focusImmersive ? (
-          <p className="cork-banner app-no-drag">拖边角改大小 · 勾选置顶 · 「贴上来」后先草稿，保存成便签</p>
-        ) : null}
-        <ScheduleStickySection
-          day={day}
-          items={data.scheduledItems}
-          setItems={setItems}
-          focusImmersiveItemId={focusImmersiveItemId}
-          onFocusImmersiveChange={setFocusImmersiveItemId}
-        />
-        {!focusImmersive ? <MemoStickySection blocks={data.noteBlocks} setBlocks={setBlocks} /> : null}
+          <>
+            <div className="window-drag-shim app-drag" aria-hidden />
+            <div className="app-main-content app-no-drag">
+              <p className="cork-banner app-no-drag">拖边角改大小 · 勾选置顶 · 「贴上来」后先草稿，保存成便签</p>
+              <ScheduleStickySection
+                day={day}
+                items={data.scheduledItems}
+                setItems={setItems}
+                focusImmersiveItemId={focusImmersiveItemId}
+                onFocusImmersiveChange={setFocusImmersiveItemId}
+                focusPlantNonce={focusPlantNonce}
+              />
+              <MemoStickySection blocks={data.noteBlocks} setBlocks={setBlocks} />
+            </div>
+          </>
+        ) : (
+          <ScheduleStickySection
+            day={day}
+            items={data.scheduledItems}
+            setItems={setItems}
+            focusImmersiveItemId={focusImmersiveItemId}
+            onFocusImmersiveChange={setFocusImmersiveItemId}
+            focusPlantNonce={focusPlantNonce}
+          />
+        )}
       </main>
     </div>
   )
