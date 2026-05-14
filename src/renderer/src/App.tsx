@@ -354,7 +354,6 @@ export default function App(): ReactElement {
             zCounter={mdiZCounter}
             onBringToFront={bringToFront}
             focusedItem={focusedItem}
-            now={new Date()}
             focusPlantNonce={focusPlantNonce}
             focusTotalMs={totals[focusedItem.id] ?? 0}
             pinned={pinned}

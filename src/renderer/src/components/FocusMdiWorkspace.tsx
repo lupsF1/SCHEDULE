@@ -1,14 +1,10 @@
-import { useCallback, useEffect, useRef, type ReactElement, type ReactNode } from 'react'
-import type { MdiPanelState, MdiPanelType } from '../domain/mdiTypes'
-import {
-  MDI_PANEL_TITLES,
-  MDI_DEFAULT_FLOAT_WIDTH,
-  MDI_DEFAULT_FLOAT_HEIGHT
-} from '../domain/mdiTypes'
+import { useCallback, useEffect, useMemo, useRef, type ReactElement, type ReactNode } from 'react'
+import type { MdiPanelState } from '../domain/mdiTypes'
 import type { ScheduledItem, NoteBlock } from '../domain/appData'
 import { sortItemsByStart } from '../domain/appData'
 import { formatFocusAccumulatedCn } from '../domain/focusStats'
 import { isScheduleItemActiveNow } from '../domain/scheduleTime'
+import { useScheduleLiveClock } from '../hooks/useScheduleLiveClock'
 import { FocusImmersiveChrome, StickyScheduleCard } from './ScheduleStickySection'
 import { MdiPanel } from './MdiPanel'
 
@@ -117,7 +113,6 @@ export function FocusMdiWorkspace({
   zCounter,
   onBringToFront,
   focusedItem,
-  now,
   focusPlantNonce,
   focusTotalMs,
   pinned,
@@ -134,7 +129,6 @@ export function FocusMdiWorkspace({
   zCounter: number
   onBringToFront: (panelId: string) => void
   focusedItem: ScheduledItem
-  now: Date
   focusPlantNonce: string | null
   focusTotalMs: number
   pinned: boolean
@@ -148,15 +142,19 @@ export function FocusMdiWorkspace({
 }): ReactElement {
   const containerRef = useRef<HTMLDivElement>(null)
 
+  // Live clock: 1-second tick drives countdown and auto-exit detection
+  const tick = useScheduleLiveClock([focusedItem])
+  const liveNow = useMemo(() => new Date(), [tick, layoutBump])
+
   // Auto-exit when the focused item's timer ends
   const exitedRef = useRef(false)
   useEffect(() => {
     if (exitedRef.current) return
-    if (!isScheduleItemActiveNow(now, focusedItem)) {
+    if (!isScheduleItemActiveNow(liveNow, focusedItem)) {
       exitedRef.current = true
       onExitFocus()
     }
-  }, [now, focusedItem, onExitFocus])
+  }, [liveNow, focusedItem, onExitFocus])
 
   // Re-clamp floating panels when layout changes
   useEffect(() => {
@@ -191,33 +189,6 @@ export function FocusMdiWorkspace({
       onPanelsChange((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)))
     },
     [onPanelsChange]
-  )
-
-  const addPanel = useCallback(
-    (type: MdiPanelType) => {
-      // If panel of this type already exists, just bringToFront
-      const existing = panels.find((p) => p.type === type)
-      if (existing) {
-        onBringToFront(existing.id)
-        if (existing.collapsed) {
-          updatePanel(existing.id, { collapsed: false })
-        }
-        return
-      }
-      const newPanel: MdiPanelState = {
-        id: crypto.randomUUID(),
-        type,
-        x: 40 + panels.length * 20,
-        y: 40 + panels.length * 20,
-        width: MDI_DEFAULT_FLOAT_WIDTH,
-        height: MDI_DEFAULT_FLOAT_HEIGHT,
-        dock: null,
-        collapsed: false,
-        z: zCounter + 1
-      }
-      onPanelsChange((prev) => [...prev, newPanel])
-    },
-    [panels, zCounter, onBringToFront, updatePanel, onPanelsChange]
   )
 
   const renderPanelContent = (panel: MdiPanelState): ReactNode => {
@@ -256,9 +227,6 @@ export function FocusMdiWorkspace({
     }
   }
 
-  const existingTypes = new Set(panels.map((p) => p.type))
-  const panelTypes: MdiPanelType[] = ['other-items', 'memo', 'stats']
-
   return (
     <div ref={containerRef} className="mdi-workspace app-no-drag">
       <div className="mdi-workspace-chrome">
@@ -291,7 +259,7 @@ export function FocusMdiWorkspace({
         <div className="mdi-center-stage">
           <StickyScheduleCard
             item={focusedItem}
-            now={now}
+            now={liveNow}
             focusPlantNonce={focusPlantNonce}
             immersive
             focusTotalMs={focusTotalMs}
@@ -368,23 +336,6 @@ export function FocusMdiWorkspace({
           {renderPanelContent(p)}
         </MdiPanel>
       ))}
-
-      <div className="mdi-toolbar">
-        {panelTypes.map((type) => {
-          const exists = existingTypes.has(type)
-          return (
-            <button
-              key={type}
-              type="button"
-              className={`mdi-toolbar-btn${exists ? ' mdi-toolbar-btn--active' : ''}`}
-              onClick={() => addPanel(type)}
-              title={exists ? `切换到${MDI_PANEL_TITLES[type]}` : `打开${MDI_PANEL_TITLES[type]}`}
-            >
-              {MDI_PANEL_TITLES[type]}
-            </button>
-          )
-        })}
-      </div>
     </div>
   )
 }
