@@ -1,6 +1,6 @@
-/** 40 种可视化变体（20 花 + 20 树）；名称用于无障碍与可读性 */
+/** 50 种可视化变体（20 花 + 20 树 + 10 多肉）；名称用于无障碍与可读性 */
 
-export type StickyPlantSpeciesKind = 'flower' | 'tree'
+export type StickyPlantSpeciesKind = 'flower' | 'tree' | 'succulent'
 
 export type StickyPlantSpecies = {
   label: string
@@ -10,6 +10,7 @@ export type StickyPlantSpecies = {
 }
 
 export const STICKY_PLANT_SPECIES: readonly StickyPlantSpecies[] = [
+  // 花卉 (0–19)
   { label: '牡丹', kind: 'flower', hue: 330 },
   { label: '玫瑰', kind: 'flower', hue: 350 },
   { label: '芍药', kind: 'flower', hue: 318 },
@@ -30,6 +31,7 @@ export const STICKY_PLANT_SPECIES: readonly StickyPlantSpecies[] = [
   { label: '虞美人', kind: 'flower', hue: 8 },
   { label: '勿忘我', kind: 'flower', hue: 230 },
   { label: '天竺葵', kind: 'flower', hue: 358 },
+  // 树木 (20–39)
   { label: '梧桐', kind: 'tree', hue: 128 },
   { label: '槐', kind: 'tree', hue: 142 },
   { label: '银杏', kind: 'tree', hue: 58 },
@@ -49,7 +51,18 @@ export const STICKY_PLANT_SPECIES: readonly StickyPlantSpecies[] = [
   { label: '桂', kind: 'tree', hue: 134 },
   { label: '桃', kind: 'tree', hue: 356 },
   { label: '梨', kind: 'tree', hue: 154 },
-  { label: '梅', kind: 'tree', hue: 356 }
+  { label: '梅', kind: 'tree', hue: 356 },
+  // 多肉 (40–49)
+  { label: '仙人掌', kind: 'succulent', hue: 140 },
+  { label: '芦荟', kind: 'succulent', hue: 148 },
+  { label: '石莲花', kind: 'succulent', hue: 290 },
+  { label: '玉露', kind: 'succulent', hue: 130 },
+  { label: '虹之玉', kind: 'succulent', hue: 15 },
+  { label: '熊童子', kind: 'succulent', hue: 120 },
+  { label: '桃蛋', kind: 'succulent', hue: 340 },
+  { label: '法师', kind: 'succulent', hue: 200 },
+  { label: '生石花', kind: 'succulent', hue: 45 },
+  { label: '条纹十二卷', kind: 'succulent', hue: 150 }
 ]
 
 export function pickStickyPlantSpeciesIndex(seed: string): number {

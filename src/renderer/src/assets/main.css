@@ -426,18 +426,18 @@ html.focus-immersive #root {
 
 .focus-celebration-plant {
   margin: 0 auto 14px;
-  padding: clamp(18px, 5vmin, 28px) 6px 0;
+  padding: clamp(18px, 5vmin, 28px) 6px 8px;
   display: flex;
   justify-content: center;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .focus-celebration-plant .sticky-plant-slot {
-  overflow: visible;
+  overflow: hidden;
 }
 
 .focus-celebration-plant .sticky-plant-svg {
-  width: min(9rem, 44vmin);
+  width: min(7rem, 36vmin);
   height: auto;
   max-width: 100%;
 }
@@ -806,6 +806,43 @@ html.focus-immersive #root {
   margin: 0;
 }
 
+/* Focus mode: panels become transparent, only content visible */
+
+.app-shell--focusImmersive .mdi-panel {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+  backdrop-filter: none;
+}
+
+.app-shell--focusImmersive .mdi-panel--docked {
+  border: none;
+}
+
+.app-shell--focusImmersive .mdi-titlebar {
+  background: transparent;
+  border-bottom: none;
+}
+
+.app-shell--focusImmersive .mdi-content {
+  background: transparent;
+}
+
+.app-shell--focusImmersive .mdi-btn {
+  border-color: rgba(24, 24, 27, 0.15);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.app-shell--focusImmersive .mdi-other-item {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.app-shell--focusImmersive .mdi-memo-title,
+.app-shell--focusImmersive .mdi-memo-body {
+  border-color: rgba(24, 24, 27, 0.12);
+  background: transparent;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mdi-panel {
     transition: none;
@@ -1042,7 +1079,7 @@ html.focus-immersive #root {
 }
 
 .sticky-note--focusImmersive .sticky-plant-svg {
-  width: min(8.5rem, 42vmin);
+  width: min(7rem, 36vmin);
   height: auto;
   max-width: 100%;
 }

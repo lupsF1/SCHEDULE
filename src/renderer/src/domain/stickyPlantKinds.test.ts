@@ -2,14 +2,17 @@ import { describe, expect, it } from 'vitest'
 import { STICKY_PLANT_SPECIES, pickStickyPlantSpeciesIndex } from './stickyPlantKinds'
 
 describe('stickyPlantKinds', () => {
-  it('has 40 species: 20 flowers then 20 trees', () => {
-    expect(STICKY_PLANT_SPECIES.length).toBe(40)
+  it('has 50 species: 20 flowers, 20 trees, 10 succulents', () => {
+    expect(STICKY_PLANT_SPECIES.length).toBe(50)
     const flowers = STICKY_PLANT_SPECIES.filter((s) => s.kind === 'flower')
     const trees = STICKY_PLANT_SPECIES.filter((s) => s.kind === 'tree')
+    const succulents = STICKY_PLANT_SPECIES.filter((s) => s.kind === 'succulent')
     expect(flowers).toHaveLength(20)
     expect(trees).toHaveLength(20)
+    expect(succulents).toHaveLength(10)
     expect(STICKY_PLANT_SPECIES.slice(0, 20).every((s) => s.kind === 'flower')).toBe(true)
-    expect(STICKY_PLANT_SPECIES.slice(20).every((s) => s.kind === 'tree')).toBe(true)
+    expect(STICKY_PLANT_SPECIES.slice(20, 40).every((s) => s.kind === 'tree')).toBe(true)
+    expect(STICKY_PLANT_SPECIES.slice(40).every((s) => s.kind === 'succulent')).toBe(true)
   })
 
   it('pickStickyPlantSpeciesIndex is stable per seed', () => {

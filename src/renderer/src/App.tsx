@@ -223,14 +223,6 @@ export default function App(): ReactElement {
     setFocusImmersiveItemId(null)
   }, [])
 
-  // Auto-dismiss celebration after 3 seconds and return to main page
-  useEffect(() => {
-    if (!celebration) return
-    const timer = setTimeout(() => {
-      dismissCelebrationAndExitFocus()
-    }, 3000)
-    return () => clearTimeout(timer)
-  }, [celebration, dismissCelebrationAndExitFocus])
 
   const applyFocusImmersiveChange = useCallback(
     (nextId: string | null) => {
