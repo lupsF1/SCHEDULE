@@ -10,6 +10,7 @@ export function MdiPanel({
   onBringToFront,
   containerRef,
   activeZ,
+  collapsedSummary,
   children
 }: {
   panel: MdiPanelState
@@ -18,6 +19,7 @@ export function MdiPanel({
   onBringToFront: () => void
   containerRef: React.RefObject<HTMLDivElement | null>
   activeZ: number
+  collapsedSummary?: ReactNode
   children: ReactNode
 }): ReactElement {
   const panelRef = useRef<HTMLDivElement>(null)
@@ -143,7 +145,11 @@ export function MdiPanel({
         </div>
       </div>
 
-      {!panel.collapsed && <div className="mdi-content">{children}</div>}
+      {panel.collapsed ? (
+        <div className="mdi-content mdi-content--collapsed">{collapsedSummary}</div>
+      ) : (
+        <div className="mdi-content">{children}</div>
+      )}
     </div>
   )
 }

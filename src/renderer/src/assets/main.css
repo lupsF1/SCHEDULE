@@ -231,6 +231,12 @@ html.focus-immersive #root {
   gap: 10px;
   margin-bottom: 10px;
   flex-wrap: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.focus-immersive-chrome:hover {
+  opacity: 1;
 }
 
 .focus-drag-strip {
@@ -263,14 +269,17 @@ html.focus-immersive #root {
   letter-spacing: 0.06em;
   padding: 8px 12px;
   border-radius: var(--radius-md);
-  border: 1px solid rgba(24, 24, 27, 0.12);
-  background: rgba(255, 254, 249, 0.92);
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--color-primary);
-  box-shadow: 0 4px 12px rgba(24, 24, 27, 0.1);
+  box-shadow: none;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .focus-exit-btn:hover {
-  background: #fffef9;
+  background: rgba(255, 254, 249, 0.92);
+  border-color: rgba(24, 24, 27, 0.12);
+  box-shadow: 0 4px 12px rgba(24, 24, 27, 0.1);
 }
 
 .focus-chrome-controls {
@@ -279,6 +288,15 @@ html.focus-immersive #root {
   gap: 6px;
   flex-shrink: 0;
   flex-wrap: nowrap;
+}
+
+.focus-chrome-pin {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.focus-chrome-controls:hover .focus-chrome-pin {
+  opacity: 1;
 }
 
 .sticky-notes-stack.sticky-notes-stack--immersive {
@@ -436,15 +454,15 @@ html.focus-immersive #root {
   padding: clamp(18px, 5vmin, 28px) 6px 8px;
   display: flex;
   justify-content: center;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .focus-celebration-plant .sticky-plant-slot {
-  overflow: hidden;
+  overflow: visible;
 }
 
 .focus-celebration-plant .sticky-plant-svg {
-  width: min(7rem, 36vmin);
+  width: min(8rem, 40vmin);
   height: auto;
   max-width: 100%;
 }
@@ -678,6 +696,15 @@ html.focus-immersive #root {
 .mdi-resize--se { bottom: -3px; right: -3px; width: 12px; height: 12px; cursor: se-resize; }
 
 /* Panel toolbar */
+
+.mdi-content--collapsed {
+  padding: 4px 8px;
+  font-size: 0.6875rem;
+  color: rgba(24, 24, 27, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* Panel content helpers */
 

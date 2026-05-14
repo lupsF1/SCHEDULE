@@ -191,6 +191,34 @@ export function FocusMdiWorkspace({
     [onPanelsChange]
   )
 
+  const getCollapsedSummary = (panel: MdiPanelState): ReactNode => {
+    switch (panel.type) {
+      case 'other-items': {
+        const sorted = sortItemsByStart(otherItems.filter((i) => i.dayKey === day))
+        const upcoming = sorted.find((i) => {
+          const endMs = i.endTime ? new Date(`${i.dayKey}T${i.endTime}`).getTime() : Infinity
+          return endMs > liveNow.getTime()
+        })
+        if (!upcoming) return <span>无更多事项</span>
+        const endPart = upcoming.endTime ? ` – ${upcoming.endTime}` : ''
+        return (
+          <span>
+            {upcoming.startTime}
+            {endPart} {upcoming.title}
+          </span>
+        )
+      }
+      case 'memo':
+        return memoBlocks.length > 0 ? <span>{memoBlocks[0]!.title || '无标题'}</span> : <span>无备忘</span>
+      case 'stats':
+        return (
+          <span>
+            {focusTotalMs > 0 ? formatFocusAccumulatedCn(focusTotalMs) : '尚未专注'}
+          </span>
+        )
+    }
+  }
+
   const renderPanelContent = (panel: MdiPanelState): ReactNode => {
     switch (panel.type) {
       case 'other-items':
@@ -249,6 +277,7 @@ export function FocusMdiWorkspace({
                 onBringToFront={() => onBringToFront(p.id)}
                 containerRef={containerRef}
                 activeZ={zCounter}
+                collapsedSummary={getCollapsedSummary(p)}
               >
                 {renderPanelContent(p)}
               </MdiPanel>
@@ -279,6 +308,7 @@ export function FocusMdiWorkspace({
                 onBringToFront={() => onBringToFront(p.id)}
                 containerRef={containerRef}
                 activeZ={zCounter}
+                collapsedSummary={getCollapsedSummary(p)}
               >
                 {renderPanelContent(p)}
               </MdiPanel>
@@ -298,6 +328,7 @@ export function FocusMdiWorkspace({
               onBringToFront={() => onBringToFront(p.id)}
               containerRef={containerRef}
               activeZ={zCounter}
+              collapsedSummary={getCollapsedSummary(p)}
             >
               {renderPanelContent(p)}
             </MdiPanel>
@@ -316,6 +347,7 @@ export function FocusMdiWorkspace({
               onBringToFront={() => onBringToFront(p.id)}
               containerRef={containerRef}
               activeZ={zCounter}
+              collapsedSummary={getCollapsedSummary(p)}
             >
               {renderPanelContent(p)}
             </MdiPanel>
@@ -332,6 +364,7 @@ export function FocusMdiWorkspace({
           onBringToFront={() => onBringToFront(p.id)}
           containerRef={containerRef}
           activeZ={p.z}
+          collapsedSummary={getCollapsedSummary(p)}
         >
           {renderPanelContent(p)}
         </MdiPanel>
