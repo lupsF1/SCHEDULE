@@ -166,6 +166,7 @@ export default function App(): ReactElement {
   const sessionStartMsRef = useRef<number | null>(null)
   const [mdiPanels, setMdiPanels] = useState<MdiPanelState[]>([])
   const [mdiZCounter, setMdiZCounter] = useState(100)
+  const [instantFocusStartMs, setInstantFocusStartMs] = useState<number | null>(null)
 
   useEffect(() => {
     if (focusImmersiveItemId === null) {
@@ -188,6 +189,7 @@ export default function App(): ReactElement {
     if (focusImmersiveItemId === null) {
       setMdiPanels([])
       setMdiZCounter(100)
+      setInstantFocusStartMs(null)
     }
   }, [focusImmersiveItemId])
 
@@ -199,6 +201,12 @@ export default function App(): ReactElement {
       )
       return nextZ
     })
+  }, [])
+
+  const onInstantFocus = useCallback((itemId: string) => {
+    setInstantFocusStartMs(Date.now())
+    setFocusImmersiveItemId(itemId)
+    setFocusPlantNonce(crypto.randomUUID())
   }, [])
 
   useEffect(() => {
@@ -359,6 +367,8 @@ export default function App(): ReactElement {
                 pinned={pinned}
                 onPinnedChange={onPinnedChange}
                 layoutBump={layoutBump}
+                onInstantFocus={onInstantFocus}
+                instantFocusStartMs={instantFocusStartMs}
               />
               <MemoStickySection day={day} blocks={data.noteBlocks} setBlocks={setBlocks} />
             </div>
@@ -380,6 +390,7 @@ export default function App(): ReactElement {
             memoBlocks={data.noteBlocks}
             onMemoBlocksChange={setBlocks}
             day={day}
+            instantFocusStartMs={instantFocusStartMs}
           />
         ) : null}
       </main>

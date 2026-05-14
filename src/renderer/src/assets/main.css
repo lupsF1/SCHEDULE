@@ -958,6 +958,22 @@ html.focus-immersive #root {
   color: var(--color-primary);
 }
 
+.sticky-board-instant-btn {
+  font: inherit;
+  cursor: pointer;
+  font-size: 0.625rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(4, 120, 87, 0.3);
+  background: rgba(4, 120, 87, 0.08);
+  color: var(--color-accent);
+}
+
+.sticky-board-instant-btn:hover {
+  background: rgba(4, 120, 87, 0.16);
+}
+
 .sticky-board-summary {
   font-size: 0.75rem;
   color: rgba(24, 24, 27, 0.6);
@@ -1256,6 +1272,23 @@ html.focus-immersive #root {
   .sticky-clock .sticky-clock-face {
     animation: none;
   }
+}
+
+.sticky-plant-lawn {
+  position: relative;
+  width: 100%;
+  height: 100px;
+  overflow: hidden;
+}
+
+.sticky-plant-lawn-blade {
+  position: absolute;
+  transform-origin: bottom center;
+}
+
+.sticky-plant-lawn-blade .sticky-plant-svg {
+  width: 22px;
+  height: auto;
 }
 
 .sticky-clock-digits {

@@ -1,18 +1,19 @@
 import type { ScheduledItem } from '../domain/appData'
-import { sortItemsByStart } from '../domain/appData'
 import { pickStickyPlantSpeciesIndex } from '../domain/stickyPlantKinds'
 import {
   getPlantGrowthFraction,
+  getInstantPlantGrowthFraction,
   getStickyLive,
   getRemainingMs,
   formatHMS,
   dayTimeToDate,
   isScheduleItemActiveNow,
-  listActiveCommittedScheduledItems
+  listActiveCommittedScheduledItems,
+  sortItemsByUrgency
 } from '../domain/scheduleTime'
 import { formatFocusAccumulatedCn } from '../domain/focusStats'
 import { useScheduleLiveClock } from '../hooks/useScheduleLiveClock'
-import { StickyPlantGrowth } from './StickyPlantGrowth'
+import { StickyPlantGrowth, LawnPlantGrowth } from './StickyPlantGrowth'
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react'
 
 function StickyScheduleEditor({
@@ -101,7 +102,8 @@ export function StickyScheduleCard({
   onRemove,
   focusPlantNonce,
   immersive,
-  focusTotalMs
+  focusTotalMs,
+  instantFocusStartMs
 }: {
   item: ScheduledItem
   now: Date
@@ -110,11 +112,14 @@ export function StickyScheduleCard({
   focusPlantNonce: string | null
   immersive: boolean
   focusTotalMs: number
+  instantFocusStartMs?: number | null
 }): ReactElement {
   const live = getStickyLive(now, item)
   const remainMs = getRemainingMs(now, item)
   const showClock = remainMs != null && remainMs > 0
-  const growth = getPlantGrowthFraction(now, item)
+  const growth = instantFocusStartMs != null
+    ? getInstantPlantGrowthFraction(now, instantFocusStartMs)
+    : getPlantGrowthFraction(now, item)
   const plantSpecies = useMemo(
     () =>
       pickStickyPlantSpeciesIndex(
@@ -136,7 +141,11 @@ export function StickyScheduleCard({
       aria-live="polite"
     >
       {growth != null ? (
-        <StickyPlantGrowth speciesIndex={plantSpecies} progress={growth} />
+        instantFocusStartMs != null ? (
+          <LawnPlantGrowth speciesIndex={plantSpecies} progress={growth} />
+        ) : (
+          <StickyPlantGrowth speciesIndex={plantSpecies} progress={growth} />
+        )
       ) : null}
       {immersive ? null : <span className="sticky-clock-label">{clockLabel}</span>}
       <div className="sticky-clock-face">
@@ -234,6 +243,50 @@ function FocusOverlapPicker({
   )
 }
 
+function InstantFocusPicker({
+  items,
+  onPick,
+  onCancel
+}: {
+  items: ScheduledItem[]
+  onPick: (id: string) => void
+  onCancel: () => void
+}): ReactElement {
+  return (
+    <div className="focus-overlap-backdrop app-no-drag" role="presentation">
+      <div
+        className="focus-overlap-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="instant-focus-heading"
+      >
+        <p id="instant-focus-heading" className="focus-overlap-heading">
+          选择要专注的事项：
+        </p>
+        <ul className="focus-overlap-list">
+          {items.map((item) => {
+            const endPart = item.endTime ? ` → ${item.endTime}` : ''
+            const label = `${item.startTime}${endPart}　${item.title}`
+            return (
+              <li key={item.id}>
+                <button type="button" className="focus-overlap-choice" onClick={() => onPick(item.id)}>
+                  {label}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+        {items.length === 0 ? (
+          <p className="sticky-board-hint">今天没有已创建的事项</p>
+        ) : null}
+        <button type="button" className="btn-mini btn-mini-ghost focus-overlap-cancel" onClick={onCancel}>
+          取消
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export function FocusImmersiveChrome({
   onExitFocus,
   pinned,
@@ -275,7 +328,9 @@ export function ScheduleStickySection({
   focusTotalsMsByItemId,
   pinned,
   onPinnedChange,
-  layoutBump = 0
+  layoutBump = 0,
+  onInstantFocus,
+  instantFocusStartMs
 }: {
   day: string
   items: ScheduledItem[]
@@ -288,18 +343,21 @@ export function ScheduleStickySection({
   onPinnedChange: (v: boolean) => void
   /** Optional: bumps when viewport/root size changes so vmin-based layouts can refresh without remounting. */
   layoutBump?: number
+  onInstantFocus?: (itemId: string) => void
+  instantFocusStartMs?: number | null
 }): ReactElement {
-  const todayItems = sortItemsByStart(items.filter((i) => i.dayKey === day))
-
   const immersive = focusImmersiveItemId !== null
 
-  const committedForClock = todayItems.filter((i) => i.committed !== false)
+  const allTodayItems = items.filter((i) => i.dayKey === day)
+  const committedForClock = allTodayItems.filter((i) => i.committed !== false)
   const clockSource =
     immersive && focusImmersiveItemId
       ? committedForClock.filter((i) => i.id === focusImmersiveItemId)
       : committedForClock
   const tick = useScheduleLiveClock(clockSource)
   const now = useMemo(() => new Date(), [tick, layoutBump])
+
+  const todayItems = sortItemsByUrgency(allTodayItems, now)
 
   const [draftStart, setDraftStart] = useState('10:00')
   const [draftEnd, setDraftEnd] = useState('')
@@ -309,6 +367,7 @@ export function ScheduleStickySection({
   const [overlapPickOpen, setOverlapPickOpen] = useState(false)
   const [overlapCandidates, setOverlapCandidates] = useState<ScheduledItem[]>([])
   const [sectionCollapsed, setSectionCollapsed] = useState(false)
+  const [instantPickOpen, setInstantPickOpen] = useState(false)
 
   const visibleRows = useMemo(() => {
     if (!immersive || !focusImmersiveItemId) return todayItems
@@ -418,6 +477,7 @@ export function ScheduleStickySection({
             focusTotalMs={focusTotalsMsByItemId[row.id] ?? 0}
             onEdit={() => setEditingId(row.id)}
             onRemove={() => removeItem(row.id)}
+            instantFocusStartMs={immersive && focusImmersiveItemId === row.id ? instantFocusStartMs : null}
           />
         )}
       </div>
@@ -441,6 +501,17 @@ export function ScheduleStickySection({
         />
       ) : null}
 
+      {instantPickOpen ? (
+        <InstantFocusPicker
+          items={todayItems.filter((i) => i.committed !== false)}
+          onPick={(id) => {
+            onInstantFocus?.(id)
+            setInstantPickOpen(false)
+          }}
+          onCancel={() => setInstantPickOpen(false)}
+        />
+      ) : null}
+
       {immersive ? (
         <FocusImmersiveChrome
           onExitFocus={exitFocus}
@@ -451,6 +522,15 @@ export function ScheduleStickySection({
         <div className="sticky-board-heading-row app-no-drag">
           <h2 className="sticky-board-heading">此刻安排</h2>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            {onInstantFocus ? (
+              <button
+                type="button"
+                className="sticky-board-instant-btn"
+                onClick={() => setInstantPickOpen(true)}
+              >
+                立即专注
+              </button>
+            ) : null}
             <button
               type="button"
               className="sticky-board-collapse-btn"

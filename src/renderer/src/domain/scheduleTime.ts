@@ -1,4 +1,4 @@
-import { sortItemsByStart, type ScheduledItem } from './appData'
+import { sortItemsByStart, timeToMinutes, type ScheduledItem } from './appData'
 
 export function dayTimeToDate(dayKey: string, hhmm: string): Date {
   const [ys = '0', mos = '0', ds = '0'] = dayKey.split('-')
@@ -179,4 +179,35 @@ export function listActiveCommittedScheduledItems(
   return sortItemsByStart(
     items.filter((i) => i.dayKey === dayKey && i.committed !== false && isScheduleItemActiveNow(now, i))
   )
+}
+
+export function sortItemsByUrgency(items: ScheduledItem[], now: Date): ScheduledItem[] {
+  const priority = (item: ScheduledItem): number => {
+    const live = getStickyLive(now, item)
+    switch (live.stripe) {
+      case 'active':
+        return 0
+      case 'soon':
+        return 1
+      case 'upcoming':
+        return 2
+      case 'past':
+        return 3
+    }
+  }
+  return [...items].sort((a, b) => {
+    const pa = priority(a)
+    const pb = priority(b)
+    if (pa !== pb) return pa - pb
+    return timeToMinutes(a.startTime) - timeToMinutes(b.startTime)
+  })
+}
+
+export function getInstantPlantGrowthFraction(
+  now: Date,
+  sessionStartMs: number,
+  durationMs: number = 3_600_000
+): number {
+  const elapsed = now.getTime() - sessionStartMs
+  return Math.min(1, elapsed / durationMs)
 }

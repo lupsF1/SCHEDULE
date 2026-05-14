@@ -122,7 +122,8 @@ export function FocusMdiWorkspace({
   otherItems,
   memoBlocks,
   onMemoBlocksChange,
-  day
+  day,
+  instantFocusStartMs
 }: {
   panels: MdiPanelState[]
   onPanelsChange: (fn: (prev: MdiPanelState[]) => MdiPanelState[]) => void
@@ -139,6 +140,7 @@ export function FocusMdiWorkspace({
   memoBlocks: NoteBlock[]
   onMemoBlocksChange: (fn: (prev: NoteBlock[]) => NoteBlock[]) => void
   day: string
+  instantFocusStartMs?: number | null
 }): ReactElement {
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -146,15 +148,16 @@ export function FocusMdiWorkspace({
   const tick = useScheduleLiveClock([focusedItem])
   const liveNow = useMemo(() => new Date(), [tick, layoutBump])
 
-  // Auto-exit when the focused item's timer ends
+  // Auto-exit when the focused item's timer ends (skip for instant focus mode)
   const exitedRef = useRef(false)
   useEffect(() => {
     if (exitedRef.current) return
+    if (instantFocusStartMs != null) return // instant focus: no auto-exit
     if (!isScheduleItemActiveNow(liveNow, focusedItem)) {
       exitedRef.current = true
       onExitFocus()
     }
-  }, [liveNow, focusedItem, onExitFocus])
+  }, [liveNow, focusedItem, onExitFocus, instantFocusStartMs])
 
   // Re-clamp floating panels when layout changes
   useEffect(() => {
@@ -294,6 +297,7 @@ export function FocusMdiWorkspace({
             focusTotalMs={focusTotalMs}
             onEdit={() => {}}
             onRemove={() => {}}
+            instantFocusStartMs={instantFocusStartMs}
           />
         </div>
 
