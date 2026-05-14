@@ -57,9 +57,26 @@ function MemoStickySection({
   blocks: NoteBlock[]
   setBlocks: (fn: (prev: NoteBlock[]) => NoteBlock[]) => void
 }): ReactElement {
+  const [collapsed, setCollapsed] = useState(false)
+
   return (
     <section className="sticky-board memo-board app-no-drag">
-      <h2 className="sticky-board-heading">纸片备忘</h2>
+      <div className="sticky-board-heading-row">
+        <h2 className="sticky-board-heading" style={{ margin: 0 }}>纸片备忘</h2>
+        <button
+          type="button"
+          className="sticky-board-collapse-btn"
+          onClick={() => setCollapsed(!collapsed)}
+        >
+          {collapsed ? '展开' : '收起'}
+        </button>
+      </div>
+      {collapsed ? (
+        <p className="sticky-board-summary">
+          {blocks.length > 0 ? blocks[0]!.title || '无标题' : '无备忘'}
+        </p>
+      ) : (
+      <>
       <div className="memo-stack">
         {blocks.map((b, idx) => {
           const skew = idx % 2 === 0 ? 'sticky-slot--skewL' : 'sticky-slot--skewR'
@@ -123,6 +140,8 @@ function MemoStickySection({
           </button>
         ) : null}
       </div>
+      </>
+      )}
     </section>
   )
 }
@@ -329,9 +348,6 @@ export default function App(): ReactElement {
           <>
             <div className="window-drag-shim app-drag" aria-hidden />
             <div className="app-main-content app-no-drag">
-              <p className="cork-banner app-no-drag">
-                拖拽窗口外边沿缩放 · 顶栏拖动移动 · 「贴上来」后先草稿，保存成便签
-              </p>
               <ScheduleStickySection
                 day={day}
                 items={data.scheduledItems}

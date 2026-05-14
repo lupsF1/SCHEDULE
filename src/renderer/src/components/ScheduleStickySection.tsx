@@ -308,6 +308,7 @@ export function ScheduleStickySection({
   const [composerOpen, setComposerOpen] = useState(false)
   const [overlapPickOpen, setOverlapPickOpen] = useState(false)
   const [overlapCandidates, setOverlapCandidates] = useState<ScheduledItem[]>([])
+  const [sectionCollapsed, setSectionCollapsed] = useState(false)
 
   const visibleRows = useMemo(() => {
     if (!immersive || !focusImmersiveItemId) return todayItems
@@ -449,31 +450,48 @@ export function ScheduleStickySection({
       ) : (
         <div className="sticky-board-heading-row app-no-drag">
           <h2 className="sticky-board-heading">此刻安排</h2>
-          <label className="toolbar-check sticky-board-focus-toggle">
-            <input
-              type="checkbox"
-              checked={immersive}
-              onChange={(e) => void onFocusCheckbox(e.target.checked)}
-            />
-            <span>专注模式</span>
-          </label>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <button
+              type="button"
+              className="sticky-board-collapse-btn"
+              onClick={() => setSectionCollapsed(!sectionCollapsed)}
+            >
+              {sectionCollapsed ? '展开' : '收起'}
+            </button>
+            <label className="toolbar-check sticky-board-focus-toggle">
+              <input
+                type="checkbox"
+                checked={immersive}
+                onChange={(e) => void onFocusCheckbox(e.target.checked)}
+              />
+              <span>专注模式</span>
+            </label>
+          </div>
         </div>
       )}
-      <div className={`sticky-notes-stack${immersive ? ' sticky-notes-stack--immersive' : ''}`}>
-        {!immersive && todayItems.length === 0 ? (
-          <p className="sticky-board-hint">点右下角「+」展开添加区，保存后便在签右侧显示圆形倒计时。</p>
-        ) : null}
-        {immersive &&
-        visibleRows.some((r) => r.id === focusImmersiveItemId && isScheduleItemActiveNow(now, r) === false) ? (
-          <p className="sticky-board-hint sticky-board-hint--immersiveWarn app-no-drag">
-            该条已不是进行中时段，点「退出专注」恢复全貌。
-          </p>
-        ) : null}
-        {visibleRows.map((row, index) => renderRowSlot(row, index))}
-      </div>
+      {sectionCollapsed && !immersive ? (
+        <p className="sticky-board-summary">
+          {todayItems.length > 0
+            ? `${todayItems[0]!.startTime} ${todayItems[0]!.title}`
+            : '今天没有安排'}
+        </p>
+      ) : (
+        <>
+        <div className={`sticky-notes-stack${immersive ? ' sticky-notes-stack--immersive' : ''}`}>
+          {!immersive && todayItems.length === 0 ? (
+            <p className="sticky-board-hint">点右下角「+」展开添加区，保存后便在签右侧显示圆形倒计时。</p>
+          ) : null}
+          {immersive &&
+          visibleRows.some((r) => r.id === focusImmersiveItemId && isScheduleItemActiveNow(now, r) === false) ? (
+            <p className="sticky-board-hint sticky-board-hint--immersiveWarn app-no-drag">
+              该条已不是进行中时段，点「退出专注」恢复全貌。
+            </p>
+          ) : null}
+          {visibleRows.map((row, index) => renderRowSlot(row, index))}
+        </div>
 
-      {!immersive ? (
-        <div className="sticky-composer-anchor app-no-drag">
+        {!immersive ? (
+          <div className="sticky-composer-anchor app-no-drag">
           {!composerOpen ? (
             <button
               type="button"
@@ -533,6 +551,8 @@ export function ScheduleStickySection({
           )}
         </div>
       ) : null}
+        </>
+      )}
     </section>
   )
 }
