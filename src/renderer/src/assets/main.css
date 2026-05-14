@@ -20,7 +20,7 @@
   --space-lg: 24px;
 
   --font-sans: 'Geist', system-ui, sans-serif;
-  --cork-bg: #cfca9e;
+  --cork-bg: #f7f3ea;
 }
 
 *,
@@ -64,14 +64,21 @@ body {
 /** Visible frame hint when not in focus immersive; hidden in immersive to keep transparency clean. */
 .app-shell.app-corkboard:not(.app-shell--focusImmersive) {
   border: 1px solid rgba(24, 24, 27, 0.12);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
 }
 
 .app-corkboard {
   background-color: var(--cork-bg);
   background-image:
-    radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 0),
-    radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 0);
-  background-size: 20px 20px, 8px 8px;
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 27px,
+      rgba(180, 170, 150, 0.12) 27px,
+      rgba(180, 170, 150, 0.12) 28px
+    );
+  background-size: 100% 28px;
 }
 
 .app-drag {
@@ -199,8 +206,8 @@ html.focus-immersive #root {
 .content-pad--focusImmersive {
   background: transparent;
   gap: var(--space-sm);
-  justify-content: flex-start;
-  align-items: stretch;
+  justify-content: center;
+  align-items: center;
   flex: 1;
   min-height: 0;
 }
@@ -808,6 +815,16 @@ html.focus-immersive #root {
 
 /* Focus mode: panels become transparent, only content visible */
 
+.app-shell--focusImmersive .mdi-workspace,
+.app-shell--focusImmersive .mdi-workspace-body,
+.app-shell--focusImmersive .mdi-center-stage,
+.app-shell--focusImmersive .mdi-dock-left,
+.app-shell--focusImmersive .mdi-dock-right,
+.app-shell--focusImmersive .mdi-dock-top,
+.app-shell--focusImmersive .mdi-dock-bottom {
+  background: transparent;
+}
+
 .app-shell--focusImmersive .mdi-panel {
   background: transparent;
   box-shadow: none;
@@ -956,14 +973,15 @@ html.focus-immersive #root {
   padding: var(--space-md);
   padding-left: calc(var(--space-md) + 12px);
   border-radius: 2px 11px 11px 2px;
-  background: linear-gradient(158deg, #fffef9 0%, #faf6ea 52%, #f6f4e6 100%);
+  background: linear-gradient(158deg, #fffffc 0%, #faf8f0 52%, #f5f2e8 100%);
   box-shadow:
     0 14px 28px rgba(24, 24, 27, 0.12),
     0 2px 0 rgba(0, 0, 0, 0.05);
+  overflow: hidden;
 }
 
 .sticky-note--sheet {
-  background: linear-gradient(172deg, #fffdf8 3%, #fbf5df 54%, #f3ead1 100%);
+  background: linear-gradient(172deg, #fffffc 3%, #f8f5ea 54%, #f2ede0 100%);
 }
 
 .sticky-note-accent {
@@ -1039,8 +1057,8 @@ html.focus-immersive #root {
 
 /** Focus immersion: stack centers in viewport height; emphasize card vs empty chrome. */
 .sticky-note--focusImmersive {
-  width: min(560px, calc(100% - 24px));
-  max-width: min(92vw, 560px);
+  width: min(480px, calc(100% - 24px));
+  max-width: min(88vw, 480px);
   margin-left: auto;
   margin-right: auto;
   box-sizing: border-box;

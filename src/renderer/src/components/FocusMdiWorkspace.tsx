@@ -111,33 +111,6 @@ function StatsContent({
   )
 }
 
-function createDefaultPanels(zStart: number): MdiPanelState[] {
-  return [
-    {
-      id: crypto.randomUUID(),
-      type: 'other-items',
-      x: 0,
-      y: 0,
-      width: MDI_DEFAULT_FLOAT_WIDTH,
-      height: MDI_DEFAULT_FLOAT_HEIGHT,
-      dock: 'left',
-      collapsed: false,
-      z: zStart
-    },
-    {
-      id: crypto.randomUUID(),
-      type: 'stats',
-      x: 0,
-      y: 0,
-      width: MDI_DEFAULT_FLOAT_WIDTH,
-      height: MDI_DEFAULT_FLOAT_HEIGHT,
-      dock: 'right',
-      collapsed: false,
-      z: zStart + 1
-    }
-  ]
-}
-
 export function FocusMdiWorkspace({
   panels,
   onPanelsChange,
@@ -174,16 +147,6 @@ export function FocusMdiWorkspace({
   day: string
 }): ReactElement {
   const containerRef = useRef<HTMLDivElement>(null)
-
-  // Initialize default panels on mount
-  const didInitRef = useRef(false)
-  useEffect(() => {
-    if (didInitRef.current) return
-    didInitRef.current = true
-    if (panels.length === 0) {
-      onPanelsChange(() => createDefaultPanels(zCounter))
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-exit when the focused item's timer ends
   const exitedRef = useRef(false)
