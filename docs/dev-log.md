@@ -143,6 +143,19 @@
 - 解决了 3 个 bug：不修改原始时间段、气泡/植物以选择时长为基准、每个时长选择独立。
 - **立即专注全天可用**：`InstantFocusPicker` 改为显示所有已提交事项（不限于今天），任何时段均可使用。
 - **立即专注自动退出**：`FocusMdiWorkspace` 区分两种自动退出逻辑——常规专注在事项时段结束时退出，立即专注在 `focusSession.durationMs` 到期时退出。非活跃时段的事项不再立即触发退出。
+- **Bug 修复**：`InstantFocusPicker` 改为只显示今天的事项（`i.dayKey === day`），避免显示其他日期的事项。
+- **Bug 修复**：恢复 `FocusMdiWorkspace` 的 fallback 1 秒 interval，当事项时段已过时 `useScheduleLiveClock` 不 tick，fallback 保证 `liveNow` 持续更新，倒计时正常运行。
+
+### 数据模型重构：支持每天重复事项
+
+- `ScheduledItem` 新增 `repeat?: 'daily'` 字段。
+- 新增辅助函数 `isItemForDay(item, day)` 和 `getItemEffectiveDayKey(item, today)`。
+- 所有 `dayKey === day` 过滤替换为 `isItemForDay(i, day)`，重复事项每天显示。
+- `getStickyLive`、`getRemainingMs`、`getPlantGrowthFraction` 新增可选 `today` 参数，重复事项用当天日期计算时间。
+- `sortItemsByUrgency` 新增可选 `today` 参数。
+- 作曲器和编辑器新增「重复」选择器（不重复 / 每天）。
+- `normalizeScheduledItem` 兼容 `repeat` 和 `reminderAdvance` 字段。
+- `InstantFocusPicker` 改为 `isItemForDay` 过滤，重复事项每天可选。
 
 ---
 

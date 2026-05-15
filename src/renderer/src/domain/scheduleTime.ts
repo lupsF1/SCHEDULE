@@ -1,4 +1,4 @@
-import { sortItemsByStart, timeToMinutes, type ScheduledItem } from './appData'
+import { sortItemsByStart, timeToMinutes, getItemEffectiveDayKey, isItemForDay, type ScheduledItem } from './appData'
 
 export function dayTimeToDate(dayKey: string, hhmm: string): Date {
   const [ys = '0', mos = '0', ds = '0'] = dayKey.split('-')
@@ -67,10 +67,11 @@ export type StickyLive = {
 const TEN_MS = 10 * 60 * 1000
 
 /** Card display for committed items relative to ``now``. */
-export function getStickyLive(now: Date, item: ScheduledItem): StickyLive {
+export function getStickyLive(now: Date, item: ScheduledItem, today?: string): StickyLive {
+  const dk = today ? getItemEffectiveDayKey(item, today) : item.dayKey
   const nowMs = now.getTime()
-  const startMs = dayTimeToDate(item.dayKey, item.startTime).getTime()
-  const endMs = item.endTime ? dayTimeToDate(item.dayKey, item.endTime).getTime() : null
+  const startMs = dayTimeToDate(dk, item.startTime).getTime()
+  const endMs = item.endTime ? dayTimeToDate(dk, item.endTime).getTime() : null
 
   if (endMs !== null && nowMs >= endMs) {
     return { stripe: 'past', line: '已结束', showCountdown: false, countdownText: '' }
@@ -114,10 +115,11 @@ export function getStickyLive(now: Date, item: ScheduledItem): StickyLive {
 }
 
 /** Milliseconds until the next ticking deadline — start time (before begin) or end time (during interval). */
-export function getRemainingMs(now: Date, item: ScheduledItem): number | null {
+export function getRemainingMs(now: Date, item: ScheduledItem, today?: string): number | null {
+  const dk = today ? getItemEffectiveDayKey(item, today) : item.dayKey
   const nowMs = now.getTime()
-  const startMs = dayTimeToDate(item.dayKey, item.startTime).getTime()
-  const endMs = item.endTime ? dayTimeToDate(item.dayKey, item.endTime).getTime() : null
+  const startMs = dayTimeToDate(dk, item.startTime).getTime()
+  const endMs = item.endTime ? dayTimeToDate(dk, item.endTime).getTime() : null
 
   if (endMs !== null && nowMs >= endMs) return null
 
@@ -140,13 +142,14 @@ export function needsLiveSecondTick(todayCommittedItems: ScheduledItem[], now: D
  * Relative growth toward the current ticking deadline — 开满时为 1（与环形倒计时对齐）。
  * 等待开始：自当日 00:00 起至正式开始；进行中：自开始到结束。
  */
-export function getPlantGrowthFraction(now: Date, item: ScheduledItem): number | null {
-  if (getRemainingMs(now, item) == null) return null
+export function getPlantGrowthFraction(now: Date, item: ScheduledItem, today?: string): number | null {
+  const dk = today ? getItemEffectiveDayKey(item, today) : item.dayKey
+  if (getRemainingMs(now, item, today) == null) return null
 
   const nowMs = now.getTime()
-  const startMs = dayTimeToDate(item.dayKey, item.startTime).getTime()
-  const endMs = item.endTime ? dayTimeToDate(item.dayKey, item.endTime).getTime() : null
-  const dayStartMs = dayTimeToDate(item.dayKey, '00:00').getTime()
+  const startMs = dayTimeToDate(dk, item.startTime).getTime()
+  const endMs = item.endTime ? dayTimeToDate(dk, item.endTime).getTime() : null
+  const dayStartMs = dayTimeToDate(dk, '00:00').getTime()
 
   if (nowMs < startMs) {
     const span = Math.max(1, startMs - dayStartMs)
@@ -183,13 +186,13 @@ export function listActiveCommittedScheduledItems(
   dayKey: string
 ): ScheduledItem[] {
   return sortItemsByStart(
-    items.filter((i) => i.dayKey === dayKey && i.committed !== false && isScheduleItemActiveNow(now, i))
+    items.filter((i) => isItemForDay(i, dayKey) && i.committed !== false && isScheduleItemActiveNow(now, i))
   )
 }
 
-export function sortItemsByUrgency(items: ScheduledItem[], now: Date): ScheduledItem[] {
+export function sortItemsByUrgency(items: ScheduledItem[], now: Date, today?: string): ScheduledItem[] {
   const priority = (item: ScheduledItem): number => {
-    const live = getStickyLive(now, item)
+    const live = getStickyLive(now, item, today)
     switch (live.stripe) {
       case 'active':
         return 0

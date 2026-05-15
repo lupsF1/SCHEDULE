@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, type ReactElement, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react'
 import type { MdiPanelState } from '../domain/mdiTypes'
 import type { ScheduledItem, NoteBlock, FocusSession } from '../domain/appData'
-import { sortItemsByStart } from '../domain/appData'
+import { sortItemsByStart, isItemForDay } from '../domain/appData'
 import { formatFocusAccumulatedCn } from '../domain/focusStats'
 import { isScheduleItemActiveNow } from '../domain/scheduleTime'
 import { useScheduleLiveClock } from '../hooks/useScheduleLiveClock'
@@ -13,7 +13,7 @@ function clamp(v: number, lo: number, hi: number): number {
 }
 
 function OtherItemsContent({ items, day }: { items: ScheduledItem[]; day: string }): ReactElement {
-  const sorted = sortItemsByStart(items.filter((i) => i.dayKey === day))
+  const sorted = sortItemsByStart(items.filter((i) => isItemForDay(i, day)))
   if (sorted.length === 0) {
     return <p className="mdi-empty-hint">今天没有其他事项</p>
   }
@@ -146,7 +146,16 @@ export function FocusMdiWorkspace({
 
   // Live clock: 1-second tick drives countdown and auto-exit detection
   const tick = useScheduleLiveClock([focusedItem])
-  const liveNow = useMemo(() => new Date(), [tick, layoutBump])
+
+  // Fallback: when item's scheduled time has ended, useScheduleLiveClock stops ticking.
+  // This interval keeps liveNow updating for instant focus countdown.
+  const [fallbackTick, setFallbackTick] = useState(0)
+  useEffect(() => {
+    const id = window.setInterval(() => setFallbackTick((t) => t + 1), 1000)
+    return () => window.clearInterval(id)
+  }, [])
+
+  const liveNow = useMemo(() => new Date(), [tick, fallbackTick, layoutBump])
 
   // Auto-exit when the focused item's timer ends
   const exitedRef = useRef(false)
@@ -206,7 +215,7 @@ export function FocusMdiWorkspace({
   const getCollapsedSummary = (panel: MdiPanelState): ReactNode => {
     switch (panel.type) {
       case 'other-items': {
-        const sorted = sortItemsByStart(otherItems.filter((i) => i.dayKey === day))
+        const sorted = sortItemsByStart(otherItems.filter((i) => isItemForDay(i, day)))
         const upcoming = sorted.find((i) => {
           const endMs = i.endTime ? new Date(`${i.dayKey}T${i.endTime}`).getTime() : Infinity
           return endMs > liveNow.getTime()

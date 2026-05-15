@@ -3,6 +3,7 @@ import {
   parseAppData,
   serializeAppData,
   defaultAppData,
+  isItemForDay,
   todayKey,
   formatNoteSavedDayLabel,
   type NoteBlock,
@@ -216,7 +217,7 @@ export default function App(): ReactElement {
     if (lastCheckedMinuteRef.current === currentMinute) return
     lastCheckedMinuteRef.current = currentMinute
     const match = data.scheduledItems.find((i) => {
-      if (i.dayKey !== day || i.committed === false) return false
+      if (!isItemForDay(i, day) || i.committed === false) return false
       if (remindedItemsRef.current.has(i.id)) return false
       const advance = i.reminderAdvance ?? 1
       const [sh, sm] = i.startTime.split(':').map(Number)

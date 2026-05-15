@@ -10,6 +10,18 @@ export type ScheduledItem = {
   committed?: boolean
   /** 提前提醒分钟数，0 = 准时，默认 1 */
   reminderAdvance?: number
+  /** 每天重复 */
+  repeat?: 'daily'
+}
+
+/** 事项是否应在指定日期显示 */
+export function isItemForDay(item: ScheduledItem, day: string): boolean {
+  return item.dayKey === day || item.repeat === 'daily'
+}
+
+/** 获取事项在指定日期的实际日期 key（重复事项用当天） */
+export function getItemEffectiveDayKey(item: ScheduledItem, today: string): string {
+  return item.repeat === 'daily' ? today : item.dayKey
 }
 
 /** 立即专注会话（独立于日程卡片的时间段） */
@@ -125,7 +137,9 @@ function normalizeScheduledItem(x: ScheduledItem): ScheduledItem {
     title: typeof x.title === 'string' ? x.title : '',
     startTime: typeof x.startTime === 'string' ? x.startTime : '09:00',
     endTime: typeof x.endTime === 'string' || x.endTime === null ? x.endTime : null,
-    ...(committed !== true ? { committed } : {})
+    ...(committed !== true ? { committed } : {}),
+    ...(typeof x.reminderAdvance === 'number' ? { reminderAdvance: x.reminderAdvance } : {}),
+    ...(x.repeat === 'daily' ? { repeat: 'daily' as const } : {})
   }
 }
 

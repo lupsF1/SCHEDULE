@@ -1,4 +1,5 @@
 import type { ScheduledItem, FocusSession } from '../domain/appData'
+import { isItemForDay } from '../domain/appData'
 import { pickStickyPlantSpeciesIndex } from '../domain/stickyPlantKinds'
 import {
   getPlantGrowthFraction,
@@ -23,19 +24,21 @@ function StickyScheduleEditor({
 }: {
   item: ScheduledItem
   isDraft: boolean
-  onSave: (patch: Pick<ScheduledItem, 'title' | 'startTime' | 'endTime' | 'committed' | 'reminderAdvance'>) => void
+  onSave: (patch: Pick<ScheduledItem, 'title' | 'startTime' | 'endTime' | 'committed' | 'reminderAdvance' | 'repeat'>) => void
   onCancel: () => void
 }): ReactElement {
   const [title, setTitle] = useState(item.title)
   const [start, setStart] = useState(item.startTime)
   const [end, setEnd] = useState(item.endTime ?? '')
   const [reminderAdvance, setReminderAdvance] = useState(item.reminderAdvance ?? 1)
+  const [repeat, setRepeat] = useState(item.repeat === 'daily')
 
   useEffect(() => {
     setTitle(item.title)
     setStart(item.startTime)
     setEnd(item.endTime ?? '')
     setReminderAdvance(item.reminderAdvance ?? 1)
+    setRepeat(item.repeat === 'daily')
   }, [item.id, item.title, item.startTime, item.endTime, item.reminderAdvance])
 
   const save = useCallback(() => {
@@ -44,9 +47,10 @@ function StickyScheduleEditor({
       startTime: start,
       endTime: end.trim() ? end : null,
       committed: true,
-      reminderAdvance
+      reminderAdvance,
+      repeat: repeat ? 'daily' : undefined
     })
-  }, [title, start, end, onSave])
+  }, [title, start, end, reminderAdvance, repeat, onSave])
 
   return (
     <article className="sticky-editor app-no-drag" aria-label={isDraft ? '新便签草稿' : '编辑便签'}>
@@ -117,6 +121,17 @@ function StickyScheduleEditor({
           <option value={3}>提前 3 分</option>
           <option value={5}>提前 5 分</option>
           <option value={10}>提前 10 分</option>
+        </select>
+      </div>
+      <div className="sticky-reminder-row">
+        <span className="sticky-reminder-label">重复</span>
+        <select
+          className="sticky-reminder-select"
+          value={repeat ? 'daily' : 'none'}
+          onChange={(e) => setRepeat(e.target.value === 'daily')}
+        >
+          <option value="none">不重复</option>
+          <option value="daily">每天</option>
         </select>
       </div>
       <label className="sticky-field sticky-field-full">
@@ -467,7 +482,7 @@ export function ScheduleStickySection({
 }): ReactElement {
   const immersive = focusImmersiveItemId !== null
 
-  const allTodayItems = items.filter((i) => i.dayKey === day)
+  const allTodayItems = items.filter((i) => isItemForDay(i, day))
   const committedForClock = allTodayItems.filter((i) => i.committed !== false)
   const clockSource =
     immersive && focusImmersiveItemId
@@ -476,12 +491,13 @@ export function ScheduleStickySection({
   const tick = useScheduleLiveClock(clockSource)
   const now = useMemo(() => new Date(), [tick, layoutBump])
 
-  const todayItems = sortItemsByUrgency(allTodayItems, now)
+  const todayItems = sortItemsByUrgency(allTodayItems, now, day)
 
   const [draftStart, setDraftStart] = useState('10:00')
   const [draftEnd, setDraftEnd] = useState('')
   const [draftTitle, setDraftTitle] = useState('')
   const [draftReminderAdvance, setDraftReminderAdvance] = useState(1)
+  const [draftRepeat, setDraftRepeat] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [composerOpen, setComposerOpen] = useState(false)
   const [overlapPickOpen, setOverlapPickOpen] = useState(false)
@@ -521,7 +537,8 @@ export function ScheduleStickySection({
         startTime: draftStart,
         endTime: draftEnd.trim() ? draftEnd : null,
         committed: false,
-        reminderAdvance: draftReminderAdvance
+        reminderAdvance: draftReminderAdvance,
+        repeat: draftRepeat ? 'daily' : undefined
       }
     ])
     setDraftTitle('')
@@ -626,7 +643,7 @@ export function ScheduleStickySection({
 
       {instantPickOpen ? (
         <InstantFocusPicker
-          items={items.filter((i) => i.committed !== false)}
+          items={items.filter((i) => isItemForDay(i, day) && i.committed !== false)}
           onPick={(id) => {
             setInstantItemId(id)
             setInstantPickOpen(false)
@@ -796,6 +813,17 @@ export function ScheduleStickySection({
                   <option value={3}>提前 3 分</option>
                   <option value={5}>提前 5 分</option>
                   <option value={10}>提前 10 分</option>
+                </select>
+              </div>
+              <div className="sticky-reminder-row">
+                <span className="sticky-reminder-label">重复</span>
+                <select
+                  className="sticky-reminder-select"
+                  value={draftRepeat ? 'daily' : 'none'}
+                  onChange={(e) => setDraftRepeat(e.target.value === 'daily')}
+                >
+                  <option value="none">不重复</option>
+                  <option value="daily">每天</option>
                 </select>
               </div>
               <input
