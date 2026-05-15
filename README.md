@@ -48,6 +48,7 @@
 
 - **Electron** + **electron-vite** — 主进程、预加载、[React 19](https://react.dev/) + **TypeScript** 渲染进程
 - **Vite 7**、**Vitest** 单元测试
+- **[svg-plant](https://github.com/days-later/svg-plant)** — 程序化 SVG 植物生成（4 个属：BushyPlant、DragonTree、Zamia、Pilea）
 - **[design.md](https://github.com/google-labs-code/design.md)** — `DESIGN.md` 规范性校验（`npm run design:lint`）
 
 ## 环境与安装
@@ -111,6 +112,9 @@ src/
         useWindowResizeBump.ts   # ResizeObserver 布局刷新
         useMdiDrag.ts            # MDI 拖拽/缩放
         useMdiSnap.ts            # MDI 边缘吸附
+      plantEngine/
+        generators/
+          svgPlantGen.ts         # svg-plant 植物工厂
 DESIGN.md                 # 设计令牌与 UI 准则
 docs/dev-log.md           # 开发与迭代记录（中文）
 ```

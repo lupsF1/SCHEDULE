@@ -183,6 +183,23 @@ export function StickyScheduleCard({
   const clockLabel =
     now.getTime() < dayTimeToDate(item.dayKey, item.startTime).getTime() ? '距开始' : '剩余'
 
+  // 专注模式下气泡缩小比例：0 = 完全消失，1 = 完整大小
+  let remainRatio = 1
+  if (immersive) {
+    if (isInstantFocus && growth != null) {
+      remainRatio = Math.max(0, 1 - growth)
+    } else if (remainMs != null) {
+      const startMs = dayTimeToDate(item.dayKey, item.startTime).getTime()
+      const endMs = item.endTime ? dayTimeToDate(item.dayKey, item.endTime).getTime() : null
+      if (endMs != null) {
+        const total = Math.max(1, endMs - startMs)
+        remainRatio = Math.max(0, Math.min(1, remainMs / total))
+      } else {
+        remainRatio = remainMs > 0 ? Math.max(0, Math.min(1, remainMs / 3_600_000)) : 0
+      }
+    }
+  }
+
   const endPart = item.endTime ? `\u2003–\u2003${item.endTime}` : ''
   const timeBand = `${item.startTime}${endPart}`
   const showCumulative =
@@ -193,23 +210,39 @@ export function StickyScheduleCard({
       className={`sticky-clock${immersive ? ' sticky-clock--focusImmersive' : ''}`}
       aria-live="polite"
     >
-      {growth != null && immersive ? (
-        instantFocusStartMs != null ? (
-          <LawnPlantGrowth speciesIndex={plantSpecies} progress={growth} />
-        ) : (
-          <StickyPlantGrowth speciesIndex={plantSpecies} progress={growth} />
-        )
-      ) : null}
-      {immersive ? null : <span className="sticky-clock-label">{clockLabel}</span>}
-      <div className="sticky-clock-face">
-        <span className="sticky-clock-digits">
-          {remainMs != null && remainMs > 0
-            ? formatHMS(remainMs)
-            : isInstantFocus
-              ? formatHMS(now.getTime() - instantFocusStartMs!)
-              : '--:--:--'}
-        </span>
-      </div>
+      {immersive ? (
+        <>
+          <div
+            className="sticky-clock-face sticky-clock-face--shrinking"
+            style={{ '--remain-ratio': remainRatio } as React.CSSProperties}
+          >
+            <span className="sticky-clock-digits">
+              {remainMs != null && remainMs > 0
+                ? formatHMS(remainMs)
+                : isInstantFocus
+                  ? formatHMS(now.getTime() - instantFocusStartMs!)
+                  : '--:--:--'}
+            </span>
+          </div>
+          {growth != null ? (
+            instantFocusStartMs != null ? (
+              <LawnPlantGrowth speciesIndex={plantSpecies} progress={growth} />
+            ) : (
+              <StickyPlantGrowth speciesIndex={plantSpecies} progress={growth} />
+            )
+          ) : null}
+        </>
+      ) : (
+        <>
+          {growth != null ? (
+            <StickyPlantGrowth speciesIndex={plantSpecies} progress={growth} />
+          ) : null}
+          <span className="sticky-clock-label">{clockLabel}</span>
+          <div className="sticky-clock-face">
+            <span className="sticky-clock-digits">{formatHMS(remainMs!)}</span>
+          </div>
+        </>
+      )}
     </aside>
   ) : null
 

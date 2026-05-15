@@ -91,6 +91,27 @@
 - 修复：`showClock` 条件改为 `isInstantFocus || (remainMs != null && remainMs > 0)`。
 - 即时专注无倒计时时，时钟面显示已专注时长（`now - instantFocusStartMs`）。
 
+### 专注模式气泡缩小动画
+
+- 新增 `remainRatio`（0~1）：有 endTime 的事项按 `remainMs / totalSpan` 计算，即时专注按 `1 - growth` 计算。
+- DOM 顺序调整：专注模式下气泡在上、植物在下（锚定底部），非专注模式保持原顺序。
+- 气泡通过 CSS 自定义属性 `--remain-ratio` 控制尺寸和透明度，随倒计时逐渐缩小到消失。
+- `.sticky-clock-face--shrinking`：宽高用 `calc(var(--remain-ratio) * maxSize)`，透明度用 `var(--remain-ratio)`，transition 1s linear。
+- `.sticky-clock--focusImmersive` 添加 `justify-content: flex-end`（底部对齐）。
+- 遵守 `prefers-reduced-motion`（禁用 transition）。
+
+### 植物模块重构：svg-plant 库
+
+- 引入 `svg-plant` 库（`npm install svg-plant`）替换手写 SVG 组件。
+- 新增 `src/renderer/src/plantEngine/generators/svgPlantGen.ts`：植物工厂，封装 `createPlant(genusKey, seed, cfg)` 函数。
+- 4 个属映射：花卉→`pilea`/`bushy`，树木→`dragon`/`bushy`，多肉→`zamia`。
+- `StickyPlantGrowth` 重构为 React 容器组件：用 `ref` 挂载 `svg-plant` 生成的 SVG DOM，`progress` 变化时更新 `plant.age` 并调用 `plant.update()`。
+- `stickyPlantKinds.ts` 的 `StickyPlantSpecies` 类型新增 `genusKey` 字段（替换原 `hue`）。
+- CSS 选择器从 `.sticky-plant-svg` 改为 `.sticky-plant-slot > svg`（适配库生成的 SVG）。
+- 构建体积增加约 34KB（650KB → 684KB）。
+
+---
+
 ## 2026-05-14
 
 ### 文档与设计与窗口说明
