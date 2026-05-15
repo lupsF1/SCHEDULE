@@ -152,11 +152,21 @@ export function FocusMdiWorkspace({
   const exitedRef = useRef(false)
   useEffect(() => {
     if (exitedRef.current) return
-    if (!isScheduleItemActiveNow(liveNow, focusedItem)) {
-      exitedRef.current = true
-      onExitFocus()
+    if (focusSession) {
+      // 立即专注：session 计时结束时自动退出
+      const elapsed = liveNow.getTime() - focusSession.startMs
+      if (elapsed >= focusSession.durationMs) {
+        exitedRef.current = true
+        onExitFocus()
+      }
+    } else {
+      // 常规专注：事项时段结束时自动退出
+      if (!isScheduleItemActiveNow(liveNow, focusedItem)) {
+        exitedRef.current = true
+        onExitFocus()
+      }
     }
-  }, [liveNow, focusedItem, onExitFocus])
+  }, [liveNow, focusedItem, onExitFocus, focusSession])
 
   // Re-clamp floating panels when layout changes
   useEffect(() => {
