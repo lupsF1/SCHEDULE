@@ -80,6 +80,29 @@ function StickyScheduleEditor({
           />
         </label>
       </div>
+      <div className="sticky-duration-row">
+        {[
+          { label: '10分', min: 10 },
+          { label: '30分', min: 30 },
+          { label: '1小时', min: 60 },
+          { label: '2小时', min: 120 }
+        ].map(({ label, min }) => (
+          <button
+            key={min}
+            type="button"
+            className="sticky-duration-btn"
+            onClick={() => {
+              const [h, m] = start.split(':').map(Number)
+              const totalMin = h * 60 + m + min
+              const eh = String(Math.floor(totalMin / 60) % 24).padStart(2, '0')
+              const em = String(totalMin % 60).padStart(2, '0')
+              setEnd(`${eh}:${em}`)
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
       <label className="sticky-field sticky-field-full">
         <span className="sticky-field-label">标题</span>
         <input
@@ -634,6 +657,29 @@ export function ScheduleStickySection({
                   value={draftEnd}
                   onChange={(e) => setDraftEnd(e.target.value)}
                 />
+              </div>
+              <div className="sticky-duration-row">
+                {[
+                  { label: '10分', min: 10 },
+                  { label: '30分', min: 30 },
+                  { label: '1小时', min: 60 },
+                  { label: '2小时', min: 120 }
+                ].map(({ label, min }) => (
+                  <button
+                    key={min}
+                    type="button"
+                    className="sticky-duration-btn"
+                    onClick={() => {
+                      const [h, m] = draftStart.split(':').map(Number)
+                      const totalMin = h * 60 + m + min
+                      const eh = String(Math.floor(totalMin / 60) % 24).padStart(2, '0')
+                      const em = String(totalMin % 60).padStart(2, '0')
+                      setDraftEnd(`${eh}:${em}`)
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
               <input
                 className="sticky-input-title"

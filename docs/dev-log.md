@@ -1,5 +1,80 @@
 # 开发日志
 
+## 2026-05-15
+
+### MDI 子窗口系统
+
+- 新增 `FocusMdiWorkspace` 容器组件，专注模式下支持浮动/停靠子窗口。
+- 新增 `MdiPanel` 组件：标题栏拖拽、8 方向缩放手柄、收起/展开、停靠/浮动切换。
+- 新增 `useMdiDrag` hook：基于 Pointer Events 的拖拽和缩放逻辑。
+- 新增 `useMdiSnap` hook：边缘吸附检测（30px 阈值）。
+- 新增 `mdiTypes.ts`：`MdiPanelState`、`MdiDockSide`、`MdiPanelType` 类型定义。
+- 三种面板类型：其他事项、纸片备忘、专注统计。
+- 底部工具栏可手动添加面板，已存在则切换到该面板。
+
+### 透明窗口
+
+- `BrowserWindow` 设置 `transparent: true`，专注模式下可穿透看到桌面。
+- CSS 链：html/body → app-shell → MDI workspace → panel，全部 `background: transparent`。
+- 子窗口（标题栏、内容区、dock 容器）在专注模式下同步透明。
+
+### 主页面样式优化
+
+- 背景从软木板改为笔记本风格纯色渐变（`#f7f3ea → #f0ece2`）。
+- 外框添加 `border-radius: var(--radius-lg)` 圆角。
+- 工具栏更紧凑（`padding: 4px`），去掉 `box-shadow`。
+- 便签卡片：统一圆角、顶部色条替代左侧色条、更轻阴影。
+- 滚动条更细（`width: 4px`）。
+- 删除 `cork-banner` 提示文字。
+
+### 植物系统扩展
+
+- 新增 10 种多肉植物（仙人掌、芦荟、石莲花等），总计 50 种。
+- 新增 `SucculentSvg` 组件：莲座叶片 + 陶盆。
+- 花卉美化：8 片水滴形花瓣（5 外 + 3 内）、多层花蕊、茎部叶片。
+- 树木美化：椭圆树冠、树叶纹理、树干纹理、小草装饰。
+- SVG viewBox 扩展为 `-2 -26 84 122`，修复树冠溢出。
+- 植物容器添加 `max-height` 和 `overflow: hidden` 约束。
+- 主页面卡片隐藏植物，只在专注模式显示。
+
+### 专注模式增强
+
+- 移除默认子窗口创建，进入专注时只显示居中卡片。
+- 新增「立即专注」模式：不限时长，选择任意事项开始计时。
+- 植物按 1 小时周期生长（`getInstantPlantGrowthFraction`）。
+- 新增草坪模式（`LawnPlantGrowth`）：12 株随机散布小植物。
+- 庆祝页面取消 3 秒自动退出，改为手动关闭。
+- 倒计时结束自动弹出庆祝页面。
+
+### 日程排序与提醒
+
+- 新增 `sortItemsByUrgency`：active > soon > upcoming > past，同状态按 startTime。
+- 新增「此刻」按钮：编辑器和作曲器中同步当前时间到开始时间。
+- 新增事项开始提醒：每 30 秒检测，匹配时弹窗可选择「开始专注」或「稍后」。
+
+### 面板收起
+
+- 主页面「此刻安排」和「纸片备忘」区域可收起/展开。
+- 收起后显示关键摘要（最近事项时间+标题 / 第一条备忘标题）。
+
+### 快速时段按钮
+
+- 编辑器和作曲器的结束时间下方新增快速时段按钮：10 分钟、30 分钟、1 小时、2 小时。
+- 点击后基于开始时间自动计算结束时间（跨日取模 24 小时）。
+
+### 修复开始提醒
+
+- 重写提醒检测逻辑：从 30 秒 interval 改为基于渲染的检测（每次 bumpClock 重渲染时执行）。
+- 新增 `lastCheckedMinuteRef` 确保每分钟只检查一次，避免重复弹窗。
+- 解决了 interval 闭包捕获旧 `data.scheduledItems` 导致提醒无法显示的问题。
+
+### 修复专注模式树溢出
+
+- 进一步收紧专注模式植物容器尺寸：`max-height` 从 `min(140px, 30vmin)` 降至 `min(100px, 22vmin)`。
+- SVG 宽度从 `min(7rem, 36vmin)` 降至 `min(5rem, 28vmin)`。
+
+---
+
 ## 2026-05-14
 
 ### 文档与设计与窗口说明

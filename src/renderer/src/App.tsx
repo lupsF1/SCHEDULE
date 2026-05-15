@@ -169,6 +169,7 @@ export default function App(): ReactElement {
   const [instantFocusStartMs, setInstantFocusStartMs] = useState<number | null>(null)
   const [startReminder, setStartReminder] = useState<ScheduledItem | null>(null)
   const remindedItemsRef = useRef<Set<string>>(new Set())
+  const lastCheckedMinuteRef = useRef<string>('')
 
   useEffect(() => {
     if (focusImmersiveItemId === null) {
@@ -205,24 +206,25 @@ export default function App(): ReactElement {
     })
   }, [])
 
-  // Check for items starting at the current minute
+  // Check for items starting at the current minute (runs on every render)
   useEffect(() => {
     if (focusImmersiveItemId || startReminder) return
-    const id = window.setInterval(() => {
-      const now = new Date()
-      const hh = String(now.getHours()).padStart(2, '0')
-      const mm = String(now.getMinutes()).padStart(2, '0')
-      const currentMinute = `${hh}:${mm}`
-      const match = data.scheduledItems.find(
-        (i) => i.dayKey === day && i.committed !== false && i.startTime === currentMinute && !remindedItemsRef.current.has(i.id)
-      )
-      if (match) {
-        remindedItemsRef.current.add(match.id)
-        setStartReminder(match)
-      }
-    }, 30_000)
-    return () => window.clearInterval(id)
-  }, [data.scheduledItems, day, focusImmersiveItemId, startReminder])
+    const now = new Date()
+    const hh = String(now.getHours()).padStart(2, '0')
+    const mm = String(now.getMinutes()).padStart(2, '0')
+    const currentMinute = `${hh}:${mm}`
+    if (lastCheckedMinuteRef.current === currentMinute) return
+    lastCheckedMinuteRef.current = currentMinute
+    const match = data.scheduledItems.find(
+      (i) => i.dayKey === day && i.committed !== false
+        && i.startTime === currentMinute
+        && !remindedItemsRef.current.has(i.id)
+    )
+    if (match) {
+      remindedItemsRef.current.add(match.id)
+      setStartReminder(match)
+    }
+  })
 
   const onInstantFocus = useCallback((itemId: string) => {
     setInstantFocusStartMs(Date.now())
