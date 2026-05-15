@@ -234,9 +234,6 @@ export function StickyScheduleCard({
         </>
       ) : (
         <>
-          {growth != null ? (
-            <StickyPlantGrowth speciesIndex={plantSpecies} progress={growth} />
-          ) : null}
           <span className="sticky-clock-label">{clockLabel}</span>
           <div className="sticky-clock-face">
             <span className="sticky-clock-digits">{formatHMS(remainMs!)}</span>

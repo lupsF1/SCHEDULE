@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, type ReactElement, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react'
 import type { MdiPanelState } from '../domain/mdiTypes'
 import type { ScheduledItem, NoteBlock } from '../domain/appData'
 import { sortItemsByStart } from '../domain/appData'
@@ -146,7 +146,31 @@ export function FocusMdiWorkspace({
 
   // Live clock: 1-second tick drives countdown and auto-exit detection
   const tick = useScheduleLiveClock([focusedItem])
-  const liveNow = useMemo(() => new Date(), [tick, layoutBump])
+
+  // Detect if useScheduleLiveClock is actively ticking
+  const prevTickRef = useRef(tick)
+  const tickStaleCountRef = useRef(0)
+  useEffect(() => {
+    if (tick === prevTickRef.current) {
+      tickStaleCountRef.current++
+    } else {
+      tickStaleCountRef.current = 0
+      prevTickRef.current = tick
+    }
+  }, [tick])
+
+  // Fallback: only tick when useScheduleLiveClock is stale (items without endTime)
+  const [fallbackTick, setFallbackTick] = useState(0)
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      if (tickStaleCountRef.current >= 2) {
+        setFallbackTick((t) => t + 1)
+      }
+    }, 1000)
+    return () => window.clearInterval(id)
+  }, [])
+
+  const liveNow = useMemo(() => new Date(), [tick, fallbackTick, layoutBump])
 
   // Auto-exit when the focused item's timer ends (skip for instant focus mode)
   const exitedRef = useRef(false)

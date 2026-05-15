@@ -158,6 +158,12 @@ export function getPlantGrowthFraction(now: Date, item: ScheduledItem): number |
     return clamp01((nowMs - startMs) / span)
   }
 
+  // 无 endTime 但已开始：用 4 小时作为默认生长周期
+  if (endMs == null && nowMs >= startMs) {
+    const span = 14_400_000 // 4 hours
+    return clamp01((nowMs - startMs) / span)
+  }
+
   return null
 }
 

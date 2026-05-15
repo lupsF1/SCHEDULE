@@ -110,6 +110,18 @@
 - CSS 选择器从 `.sticky-plant-svg` 改为 `.sticky-plant-slot > svg`（适配库生成的 SVG）。
 - 构建体积增加约 34KB（650KB → 684KB）。
 
+### svg-plant 重构后 Bug 修复
+
+- **Bug 1 气泡缩小失效**：CSS 特异性冲突，`.sticky-clock-face--shrinking`（0-2-0）被 `.sticky-note--focusImmersive .sticky-clock-face`（0-2-0）覆盖。修复：提高为 `.sticky-note--focusImmersive .sticky-clock-face--shrinking`（0-3-0）。
+- **Bug 2 专注模式植物消失**：`getPlantGrowthFraction` 对无 endTime 事项在开始后返回 `null`。修复：无 endTime 已开始时用 1 小时作为默认生长周期。
+- **Bug 3 主页出现植物**：非专注分支（`immersive=false`）仍渲染植物。修复：去掉非专注分支的植物渲染。
+- **Bug 4 立即专注计时失效**：`useScheduleLiveClock` 不为无 endTime 事项触发秒级 tick。修复：`FocusMdiWorkspace` 新增条件化 fallback interval（仅在 `useScheduleLiveClock` 连续 2 秒不 tick 时激活，避免双重 tick）。
+
+### Code Review 修复
+
+- **growth span**：无 endTime 事项默认生长周期从 1 小时改为 4 小时（14,400,000ms），避免 1 小时后植物停滞。
+- **fallback 条件化**：用 ref 检测 `useScheduleLiveClock` 的 tick 是否活跃，仅当 tick 连续 2 秒不变时才触发 fallback 状态更新，消除双重 tick 性能问题。
+
 ---
 
 ## 2026-05-14

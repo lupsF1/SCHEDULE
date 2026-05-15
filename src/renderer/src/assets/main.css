@@ -1211,7 +1211,7 @@ html.focus-immersive #root {
     0 2px 6px rgba(24, 24, 27, 0.07);
 }
 
-.sticky-clock-face--shrinking {
+.sticky-note--focusImmersive .sticky-clock-face--shrinking {
   width: calc(var(--remain-ratio, 1) * min(9rem, 38vmin));
   height: calc(var(--remain-ratio, 1) * min(9rem, 38vmin));
   opacity: max(0, var(--remain-ratio, 1));
