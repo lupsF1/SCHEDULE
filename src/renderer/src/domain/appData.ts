@@ -12,6 +12,13 @@ export type ScheduledItem = {
   reminderAdvance?: number
 }
 
+/** 立即专注会话（独立于日程卡片的时间段） */
+export type FocusSession = {
+  itemId: string
+  startMs: number
+  durationMs: number
+}
+
 export type NoteBlock = {
   id: string
   title: string

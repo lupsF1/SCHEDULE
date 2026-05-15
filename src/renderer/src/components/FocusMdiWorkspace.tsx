@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, type ReactElement, type ReactNode } from 'react'
 import type { MdiPanelState } from '../domain/mdiTypes'
-import type { ScheduledItem, NoteBlock } from '../domain/appData'
+import type { ScheduledItem, NoteBlock, FocusSession } from '../domain/appData'
 import { sortItemsByStart } from '../domain/appData'
 import { formatFocusAccumulatedCn } from '../domain/focusStats'
 import { isScheduleItemActiveNow } from '../domain/scheduleTime'
@@ -122,7 +122,8 @@ export function FocusMdiWorkspace({
   otherItems,
   memoBlocks,
   onMemoBlocksChange,
-  day
+  day,
+  focusSession
 }: {
   panels: MdiPanelState[]
   onPanelsChange: (fn: (prev: MdiPanelState[]) => MdiPanelState[]) => void
@@ -139,6 +140,7 @@ export function FocusMdiWorkspace({
   memoBlocks: NoteBlock[]
   onMemoBlocksChange: (fn: (prev: NoteBlock[]) => NoteBlock[]) => void
   day: string
+  focusSession?: FocusSession | null
 }): ReactElement {
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -292,6 +294,7 @@ export function FocusMdiWorkspace({
             focusPlantNonce={focusPlantNonce}
             immersive
             focusTotalMs={focusTotalMs}
+            focusSession={focusSession}
             onEdit={() => {}}
             onRemove={() => {}}
           />

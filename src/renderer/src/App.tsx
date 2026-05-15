@@ -1,4 +1,4 @@
-import type { ScheduledItem } from './domain/appData'
+import type { ScheduledItem, FocusSession } from './domain/appData'
 import {
   parseAppData,
   serializeAppData,
@@ -166,6 +166,7 @@ export default function App(): ReactElement {
   const sessionStartMsRef = useRef<number | null>(null)
   const [mdiPanels, setMdiPanels] = useState<MdiPanelState[]>([])
   const [mdiZCounter, setMdiZCounter] = useState(100)
+  const [focusSession, setFocusSession] = useState<FocusSession | null>(null)
   const [startReminder, setStartReminder] = useState<ScheduledItem | null>(null)
   const remindedItemsRef = useRef<Set<string>>(new Set())
   const lastCheckedMinuteRef = useRef<string>('')
@@ -191,6 +192,7 @@ export default function App(): ReactElement {
     if (focusImmersiveItemId === null) {
       setMdiPanels([])
       setMdiZCounter(100)
+      setFocusSession(null)
     }
   }, [focusImmersiveItemId])
 
@@ -281,8 +283,12 @@ export default function App(): ReactElement {
       if (nextId === null && focusImmersiveItemId) {
         const itemId = focusImmersiveItemId
         const nonce = focusPlantNonce ?? crypto.randomUUID()
-        const started = sessionStartMsRef.current
-        const elapsed = started != null ? Date.now() - started : 0
+        // 立即专注用 focusSession 计算经过时间，常规专注用 sessionStartMsRef
+        const elapsed = focusSession
+          ? Math.min(focusSession.durationMs, Date.now() - focusSession.startMs)
+          : sessionStartMsRef.current != null
+            ? Date.now() - sessionStartMsRef.current
+            : 0
         const row = data.scheduledItems.find((i) => i.id === itemId)
         const dayKey = row?.dayKey ?? day
         const prevTotal = data.focusTotalsMsByItemId?.[itemId] ?? 0
@@ -315,7 +321,8 @@ export default function App(): ReactElement {
       day,
       dismissCelebrationAndExitFocus,
       focusImmersiveItemId,
-      focusPlantNonce
+      focusPlantNonce,
+      focusSession
     ]
   )
 
@@ -328,19 +335,14 @@ export default function App(): ReactElement {
   }, [])
 
   const onInstantFocus = useCallback((itemId: string, durationMinutes: number = 60) => {
-    const now = new Date()
-    const endMs = now.getTime() + durationMinutes * 60_000
-    const endDate = new Date(endMs)
-    // 跨日时 cap 到 23:59（dayKey 不变，endTime 必须在当天内）
-    const crossesDay = endDate.getDate() !== now.getDate() || endDate.getMonth() !== now.getMonth()
-    const eh = crossesDay ? '23' : String(endDate.getHours()).padStart(2, '0')
-    const em = crossesDay ? '59' : String(endDate.getMinutes()).padStart(2, '0')
-    setItems((prev) => prev.map((item) =>
-      item.id === itemId ? { ...item, endTime: `${eh}:${em}` } : item
-    ))
+    setFocusSession({
+      itemId,
+      startMs: Date.now(),
+      durationMs: durationMinutes * 60_000
+    })
     setFocusImmersiveItemId(itemId)
     setFocusPlantNonce(crypto.randomUUID())
-  }, [setItems])
+  }, [])
 
   const dateLabel = `${day.slice(0, 4)}年 ${day.slice(5, 7)}月 ${day.slice(8, 10)}日`
 
@@ -404,6 +406,7 @@ export default function App(): ReactElement {
                 onPinnedChange={onPinnedChange}
                 layoutBump={layoutBump}
                 onInstantFocus={onInstantFocus}
+                focusSession={focusSession}
               />
               <MemoStickySection day={day} blocks={data.noteBlocks} setBlocks={setBlocks} />
             </div>
@@ -421,6 +424,7 @@ export default function App(): ReactElement {
             onPinnedChange={onPinnedChange}
             onExitFocus={() => applyFocusImmersiveChange(null)}
             layoutBump={layoutBump}
+            focusSession={focusSession}
             otherItems={otherItems}
             memoBlocks={data.noteBlocks}
             onMemoBlocksChange={setBlocks}

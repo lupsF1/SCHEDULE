@@ -1,4 +1,4 @@
-import type { ScheduledItem } from '../domain/appData'
+import type { ScheduledItem, FocusSession } from '../domain/appData'
 import { pickStickyPlantSpeciesIndex } from '../domain/stickyPlantKinds'
 import {
   getPlantGrowthFraction,
@@ -153,7 +153,8 @@ export function StickyScheduleCard({
   onRemove,
   focusPlantNonce,
   immersive,
-  focusTotalMs
+  focusTotalMs,
+  focusSession
 }: {
   item: ScheduledItem
   now: Date
@@ -162,11 +163,19 @@ export function StickyScheduleCard({
   focusPlantNonce: string | null
   immersive: boolean
   focusTotalMs: number
+  focusSession?: FocusSession | null
 }): ReactElement {
   const live = getStickyLive(now, item)
-  const remainMs = getRemainingMs(now, item)
+
+  // 立即专注：用 focusSession 的时间窗口计算；常规：用 getRemainingMs
+  const sessionEndMs = focusSession ? focusSession.startMs + focusSession.durationMs : null
+  const remainMs = focusSession
+    ? Math.max(0, sessionEndMs! - now.getTime())
+    : getRemainingMs(now, item)
   const showClock = remainMs != null && remainMs > 0
-  const growth = getPlantGrowthFraction(now, item)
+  const growth = focusSession
+    ? Math.min(1, (now.getTime() - focusSession.startMs) / focusSession.durationMs)
+    : getPlantGrowthFraction(now, item)
   const plantSpecies = useMemo(
     () =>
       pickStickyPlantSpeciesIndex(
@@ -179,11 +188,15 @@ export function StickyScheduleCard({
 
   // 专注模式下气泡缩小比例：0 = 完全消失，1 = 完整大小
   let remainRatio = 1
-  if (immersive && remainMs != null && item.endTime) {
-    const startMs = dayTimeToDate(item.dayKey, item.startTime).getTime()
-    const endMs = dayTimeToDate(item.dayKey, item.endTime).getTime()
-    const total = Math.max(1, endMs - startMs)
-    remainRatio = Math.max(0, Math.min(1, remainMs / total))
+  if (immersive) {
+    if (focusSession && remainMs != null) {
+      remainRatio = Math.max(0, remainMs / focusSession.durationMs)
+    } else if (remainMs != null && item.endTime) {
+      const startMs = dayTimeToDate(item.dayKey, item.startTime).getTime()
+      const endMs = dayTimeToDate(item.dayKey, item.endTime).getTime()
+      const total = Math.max(1, endMs - startMs)
+      remainRatio = Math.max(0, Math.min(1, remainMs / total))
+    }
   }
 
   const endPart = item.endTime ? `\u2003–\u2003${item.endTime}` : ''
@@ -435,7 +448,8 @@ export function ScheduleStickySection({
   pinned,
   onPinnedChange,
   layoutBump = 0,
-  onInstantFocus
+  onInstantFocus,
+  focusSession
 }: {
   day: string
   items: ScheduledItem[]
@@ -449,6 +463,7 @@ export function ScheduleStickySection({
   /** Optional: bumps when viewport/root size changes so vmin-based layouts can refresh without remounting. */
   layoutBump?: number
   onInstantFocus?: (itemId: string, durationMinutes: number) => void
+  focusSession?: FocusSession | null
 }): ReactElement {
   const immersive = focusImmersiveItemId !== null
 
@@ -583,6 +598,7 @@ export function ScheduleStickySection({
             focusPlantNonce={focusPlantNonce}
             immersive={immersive && focusImmersiveItemId === row.id}
             focusTotalMs={focusTotalsMsByItemId[row.id] ?? 0}
+            focusSession={immersive && focusImmersiveItemId === row.id ? focusSession : null}
             onEdit={() => setEditingId(row.id)}
             onRemove={() => removeItem(row.id)}
           />

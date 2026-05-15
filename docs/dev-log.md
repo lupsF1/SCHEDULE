@@ -133,6 +133,15 @@
 - 开始提醒的「开始专注」默认使用 60 分钟时长。
 - **跨日修复**：`onInstantFocus` 检测 endTime 是否跨日，跨日时 cap 到 `23:59`，避免 dayKey 不变导致 `getRemainingMs` 计算异常。
 
+### 立即专注重构：FocusSession 独立计时
+
+- 新增 `FocusSession` 类型（`itemId`、`startMs`、`durationMs`），独立于日程卡片的时间段。
+- `onInstantFocus` 不再修改事项的 `endTime`，改为设置 `focusSession` state。
+- `StickyScheduleCard` 根据是否有 `focusSession` 决定倒计时和植物生长的计算基准：有 `focusSession` 时以 session 的 `durationMs` 为完整周期，无时用常规 `getPlantGrowthFraction`。
+- `remainRatio`（气泡缩小比例）同样以 `focusSession.durationMs` 为基准。
+- 退出专注时累计时间取 `Math.min(durationMs, 实际经过时间)`。
+- 解决了 3 个 bug：不修改原始时间段、气泡/植物以选择时长为基准、每个时长选择独立。
+
 ---
 
 ## 2026-05-14
