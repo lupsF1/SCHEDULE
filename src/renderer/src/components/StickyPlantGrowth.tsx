@@ -359,9 +359,7 @@ export function StickyPlantGrowth({ speciesIndex, progress }: Props): ReactEleme
   return (
     <div className={`sticky-plant-slot${clamped >= 0.96 ? ' sticky-plant-slot--peak' : ''}`}>
       <svg
-        viewBox="0 0 80 94"
-        width="76"
-        height="88"
+        viewBox="-2 -26 84 122"
         role="img"
         aria-label={ariaLabel}
         className="sticky-plant-svg"

@@ -167,6 +167,8 @@ export default function App(): ReactElement {
   const [mdiPanels, setMdiPanels] = useState<MdiPanelState[]>([])
   const [mdiZCounter, setMdiZCounter] = useState(100)
   const [instantFocusStartMs, setInstantFocusStartMs] = useState<number | null>(null)
+  const [startReminder, setStartReminder] = useState<ScheduledItem | null>(null)
+  const remindedItemsRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     if (focusImmersiveItemId === null) {
@@ -202,6 +204,25 @@ export default function App(): ReactElement {
       return nextZ
     })
   }, [])
+
+  // Check for items starting at the current minute
+  useEffect(() => {
+    if (focusImmersiveItemId || startReminder) return
+    const id = window.setInterval(() => {
+      const now = new Date()
+      const hh = String(now.getHours()).padStart(2, '0')
+      const mm = String(now.getMinutes()).padStart(2, '0')
+      const currentMinute = `${hh}:${mm}`
+      const match = data.scheduledItems.find(
+        (i) => i.dayKey === day && i.committed !== false && i.startTime === currentMinute && !remindedItemsRef.current.has(i.id)
+      )
+      if (match) {
+        remindedItemsRef.current.add(match.id)
+        setStartReminder(match)
+      }
+    }, 30_000)
+    return () => window.clearInterval(id)
+  }, [data.scheduledItems, day, focusImmersiveItemId, startReminder])
 
   const onInstantFocus = useCallback((itemId: string) => {
     setInstantFocusStartMs(Date.now())
@@ -396,6 +417,38 @@ export default function App(): ReactElement {
       </main>
       {celebration ? (
         <FocusCelebrationOverlay snapshot={celebration} onDismiss={dismissCelebrationAndExitFocus} />
+      ) : null}
+      {startReminder ? (
+        <div className="focus-overlap-backdrop app-no-drag" role="presentation">
+          <div className="focus-overlap-modal" role="dialog" aria-modal="true">
+            <p className="focus-overlap-heading">
+              「{startReminder.title}」已到开始时间
+            </p>
+            <p style={{ fontSize: '0.75rem', color: 'rgba(24,24,27,0.6)', margin: '0 0 12px' }}>
+              {startReminder.startTime}
+              {startReminder.endTime ? ` – ${startReminder.endTime}` : ''}
+            </p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="button"
+                className="btn-mini btn-mini-primary"
+                onClick={() => {
+                  onInstantFocus(startReminder.id)
+                  setStartReminder(null)
+                }}
+              >
+                开始专注
+              </button>
+              <button
+                type="button"
+                className="btn-mini btn-mini-ghost"
+                onClick={() => setStartReminder(null)}
+              >
+                稍后
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </div>
   )

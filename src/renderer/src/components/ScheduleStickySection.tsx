@@ -51,12 +51,24 @@ function StickyScheduleEditor({
       <div className="sticky-editor-grid">
         <label className="sticky-field">
           <span className="sticky-field-label">开始</span>
-          <input
-            type="time"
-            className="sticky-input-time"
-            value={start}
-            onChange={(e) => setStart(e.target.value)}
-          />
+          <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+            <input
+              type="time"
+              className="sticky-input-time"
+              value={start}
+              onChange={(e) => setStart(e.target.value)}
+            />
+            <button
+              type="button"
+              className="sticky-sync-time-btn"
+              onClick={() => {
+                const n = new Date()
+                setStart(`${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`)
+              }}
+            >
+              此刻
+            </button>
+          </div>
         </label>
         <label className="sticky-field">
           <span className="sticky-field-label">结束</span>
@@ -140,7 +152,7 @@ export function StickyScheduleCard({
       className={`sticky-clock${immersive ? ' sticky-clock--focusImmersive' : ''}`}
       aria-live="polite"
     >
-      {growth != null ? (
+      {growth != null && immersive ? (
         instantFocusStartMs != null ? (
           <LawnPlantGrowth speciesIndex={plantSpecies} progress={growth} />
         ) : (
@@ -596,13 +608,25 @@ export function ScheduleStickySection({
                 </button>
               </div>
               <div className="sticky-editor-grid">
-                <input
-                  type="time"
-                  className="sticky-input-time"
-                  aria-label="新条目的开始时间"
-                  value={draftStart}
-                  onChange={(e) => setDraftStart(e.target.value)}
-                />
+                <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                  <input
+                    type="time"
+                    className="sticky-input-time"
+                    aria-label="新条目的开始时间"
+                    value={draftStart}
+                    onChange={(e) => setDraftStart(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="sticky-sync-time-btn"
+                    onClick={() => {
+                      const n = new Date()
+                      setDraftStart(`${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`)
+                    }}
+                  >
+                    此刻
+                  </button>
+                </div>
                 <input
                   type="time"
                   className="sticky-input-time"

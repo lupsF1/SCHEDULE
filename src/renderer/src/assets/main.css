@@ -974,6 +974,23 @@ html.focus-immersive #root {
   background: rgba(4, 120, 87, 0.16);
 }
 
+.sticky-sync-time-btn {
+  font: inherit;
+  cursor: pointer;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(4, 120, 87, 0.25);
+  background: rgba(4, 120, 87, 0.06);
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.sticky-sync-time-btn:hover {
+  background: rgba(4, 120, 87, 0.14);
+}
+
 .sticky-board-summary {
   font-size: 0.75rem;
   color: rgba(24, 24, 27, 0.6);
@@ -1200,13 +1217,19 @@ html.focus-immersive #root {
 
 .sticky-plant-slot {
   width: 100%;
+  max-height: 80px;
   display: flex;
   justify-content: center;
+  align-items: flex-end;
   margin-bottom: 1px;
   transform-origin: bottom center;
   animation: stickyPlantSway 4.6s ease-in-out infinite alternate;
   will-change: transform;
   overflow: hidden;
+}
+
+.sticky-note--focusImmersive .sticky-plant-slot {
+  max-height: min(140px, 30vmin);
 }
 
 .sticky-plant-svg {
