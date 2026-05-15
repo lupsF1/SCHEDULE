@@ -1014,6 +1014,29 @@ html.focus-immersive #root {
   color: var(--color-primary);
 }
 
+.sticky-reminder-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sticky-reminder-label {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  color: rgba(24, 24, 27, 0.5);
+}
+
+.sticky-reminder-select {
+  font: inherit;
+  font-size: 0.5625rem;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(24, 24, 27, 0.1);
+  background: transparent;
+  color: rgba(24, 24, 27, 0.6);
+  cursor: pointer;
+}
+
 .sticky-board-summary {
   font-size: 0.75rem;
   color: rgba(24, 24, 27, 0.6);

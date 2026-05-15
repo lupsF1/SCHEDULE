@@ -73,7 +73,23 @@
 - 进一步收紧专注模式植物容器尺寸：`max-height` 从 `min(140px, 30vmin)` 降至 `min(100px, 22vmin)`。
 - SVG 宽度从 `min(7rem, 36vmin)` 降至 `min(5rem, 28vmin)`。
 
----
+### 快速时段按钮
+
+- 编辑器和作曲器的结束时间下方新增快速时段按钮：10 分钟、30 分钟、1 小时、2 小时。
+- 点击后基于开始时间自动计算结束时间（跨日取模 24 小时）。
+
+### 可自定义提前提醒
+
+- `ScheduledItem` 新增 `reminderAdvance` 字段（提前提醒分钟数，0 = 准时，默认 1）。
+- 作曲器和编辑器新增提醒提前量选择器：准时 / 提前 1 分 / 3 分 / 5 分 / 10 分。
+- 提醒检测逻辑改为按每个事项的 `reminderAdvance` 计算对应的提醒分钟。
+
+### 修复即时专注植物消失
+
+- Bug：提醒页面点击「开始专注」后，专注页面植物生长模块消失。
+- 根因：`showClock = remainMs != null && remainMs > 0`，即时专注的事项 `startTime` 已过，`getRemainingMs` 返回 `null`，导致 `clockAside` 整体不渲染。
+- 修复：`showClock` 条件改为 `isInstantFocus || (remainMs != null && remainMs > 0)`。
+- 即时专注无倒计时时，时钟面显示已专注时长（`now - instantFocusStartMs`）。
 
 ## 2026-05-14
 

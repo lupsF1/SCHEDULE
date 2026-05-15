@@ -8,6 +8,8 @@ export type ScheduledItem = {
   endTime: string | null
   /** Saved as sticky card UI; drafts use false until user clicks Save */
   committed?: boolean
+  /** 提前提醒分钟数，0 = 准时，默认 1 */
+  reminderAdvance?: number
 }
 
 export type NoteBlock = {

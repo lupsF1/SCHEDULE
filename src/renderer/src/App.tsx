@@ -206,7 +206,7 @@ export default function App(): ReactElement {
     })
   }, [])
 
-  // Check for items starting at the current minute (runs on every render)
+  // Check for items starting soon (runs on every render)
   useEffect(() => {
     if (focusImmersiveItemId || startReminder) return
     const now = new Date()
@@ -215,11 +215,17 @@ export default function App(): ReactElement {
     const currentMinute = `${hh}:${mm}`
     if (lastCheckedMinuteRef.current === currentMinute) return
     lastCheckedMinuteRef.current = currentMinute
-    const match = data.scheduledItems.find(
-      (i) => i.dayKey === day && i.committed !== false
-        && i.startTime === currentMinute
-        && !remindedItemsRef.current.has(i.id)
-    )
+    const match = data.scheduledItems.find((i) => {
+      if (i.dayKey !== day || i.committed === false) return false
+      if (remindedItemsRef.current.has(i.id)) return false
+      const advance = i.reminderAdvance ?? 1
+      const [sh, sm] = i.startTime.split(':').map(Number)
+      const totalMin = sh * 60 + sm - advance
+      const abs = ((totalMin % 1440) + 1440) % 1440
+      const rh = String(Math.floor(abs / 60)).padStart(2, '0')
+      const rm = String(abs % 60).padStart(2, '0')
+      return `${rh}:${rm}` === currentMinute
+    })
     if (match) {
       remindedItemsRef.current.add(match.id)
       setStartReminder(match)

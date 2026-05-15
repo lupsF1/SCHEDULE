@@ -24,25 +24,28 @@ function StickyScheduleEditor({
 }: {
   item: ScheduledItem
   isDraft: boolean
-  onSave: (patch: Pick<ScheduledItem, 'title' | 'startTime' | 'endTime' | 'committed'>) => void
+  onSave: (patch: Pick<ScheduledItem, 'title' | 'startTime' | 'endTime' | 'committed' | 'reminderAdvance'>) => void
   onCancel: () => void
 }): ReactElement {
   const [title, setTitle] = useState(item.title)
   const [start, setStart] = useState(item.startTime)
   const [end, setEnd] = useState(item.endTime ?? '')
+  const [reminderAdvance, setReminderAdvance] = useState(item.reminderAdvance ?? 1)
 
   useEffect(() => {
     setTitle(item.title)
     setStart(item.startTime)
     setEnd(item.endTime ?? '')
-  }, [item.id, item.title, item.startTime, item.endTime])
+    setReminderAdvance(item.reminderAdvance ?? 1)
+  }, [item.id, item.title, item.startTime, item.endTime, item.reminderAdvance])
 
   const save = useCallback(() => {
     onSave({
       title: title.trim() || '未命名',
       startTime: start,
       endTime: end.trim() ? end : null,
-      committed: true
+      committed: true,
+      reminderAdvance
     })
   }, [title, start, end, onSave])
 
@@ -103,6 +106,20 @@ function StickyScheduleEditor({
           </button>
         ))}
       </div>
+      <div className="sticky-reminder-row">
+        <span className="sticky-reminder-label">提醒</span>
+        <select
+          className="sticky-reminder-select"
+          value={reminderAdvance}
+          onChange={(e) => setReminderAdvance(Number(e.target.value))}
+        >
+          <option value={0}>准时</option>
+          <option value={1}>提前 1 分</option>
+          <option value={3}>提前 3 分</option>
+          <option value={5}>提前 5 分</option>
+          <option value={10}>提前 10 分</option>
+        </select>
+      </div>
       <label className="sticky-field sticky-field-full">
         <span className="sticky-field-label">标题</span>
         <input
@@ -151,9 +168,10 @@ export function StickyScheduleCard({
 }): ReactElement {
   const live = getStickyLive(now, item)
   const remainMs = getRemainingMs(now, item)
-  const showClock = remainMs != null && remainMs > 0
-  const growth = instantFocusStartMs != null
-    ? getInstantPlantGrowthFraction(now, instantFocusStartMs)
+  const isInstantFocus = instantFocusStartMs != null
+  const showClock = isInstantFocus || (remainMs != null && remainMs > 0)
+  const growth = isInstantFocus
+    ? getInstantPlantGrowthFraction(now, instantFocusStartMs!)
     : getPlantGrowthFraction(now, item)
   const plantSpecies = useMemo(
     () =>
@@ -184,7 +202,13 @@ export function StickyScheduleCard({
       ) : null}
       {immersive ? null : <span className="sticky-clock-label">{clockLabel}</span>}
       <div className="sticky-clock-face">
-        <span className="sticky-clock-digits">{formatHMS(remainMs!)}</span>
+        <span className="sticky-clock-digits">
+          {remainMs != null && remainMs > 0
+            ? formatHMS(remainMs)
+            : isInstantFocus
+              ? formatHMS(now.getTime() - instantFocusStartMs!)
+              : '--:--:--'}
+        </span>
       </div>
     </aside>
   ) : null
@@ -397,6 +421,7 @@ export function ScheduleStickySection({
   const [draftStart, setDraftStart] = useState('10:00')
   const [draftEnd, setDraftEnd] = useState('')
   const [draftTitle, setDraftTitle] = useState('')
+  const [draftReminderAdvance, setDraftReminderAdvance] = useState(1)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [composerOpen, setComposerOpen] = useState(false)
   const [overlapPickOpen, setOverlapPickOpen] = useState(false)
@@ -433,13 +458,14 @@ export function ScheduleStickySection({
         title: draftTitle.trim() || '未命名',
         startTime: draftStart,
         endTime: draftEnd.trim() ? draftEnd : null,
-        committed: false
+        committed: false,
+        reminderAdvance: draftReminderAdvance
       }
     ])
     setDraftTitle('')
     setDraftEnd('')
     setComposerOpen(false)
-  }, [draftEnd, draftStart, draftTitle, day, setItems])
+  }, [draftEnd, draftStart, draftTitle, draftReminderAdvance, day, setItems])
 
   const onFocusCheckbox = useCallback(
     (wantOn: boolean) => {
@@ -680,6 +706,20 @@ export function ScheduleStickySection({
                     {label}
                   </button>
                 ))}
+              </div>
+              <div className="sticky-reminder-row">
+                <span className="sticky-reminder-label">提醒</span>
+                <select
+                  className="sticky-reminder-select"
+                  value={draftReminderAdvance}
+                  onChange={(e) => setDraftReminderAdvance(Number(e.target.value))}
+                >
+                  <option value={0}>准时</option>
+                  <option value={1}>提前 1 分</option>
+                  <option value={3}>提前 3 分</option>
+                  <option value={5}>提前 5 分</option>
+                  <option value={10}>提前 10 分</option>
+                </select>
               </div>
               <input
                 className="sticky-input-title"
