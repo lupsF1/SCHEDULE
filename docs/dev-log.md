@@ -131,6 +131,7 @@
 - 删除 `FocusMdiWorkspace` 的 fallback tick（`useScheduleLiveClock` 现在能正常 tick）。
 - `StickyScheduleCard` 简化为纯常规逻辑：`showClock`、`growth`、`remainRatio` 全部基于 `getRemainingMs` 和 `getPlantGrowthFraction`。
 - 开始提醒的「开始专注」默认使用 60 分钟时长。
+- **跨日修复**：`onInstantFocus` 检测 endTime 是否跨日，跨日时 cap 到 `23:59`，避免 dayKey 不变导致 `getRemainingMs` 计算异常。
 
 ---
 

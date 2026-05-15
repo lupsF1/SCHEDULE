@@ -331,8 +331,10 @@ export default function App(): ReactElement {
     const now = new Date()
     const endMs = now.getTime() + durationMinutes * 60_000
     const endDate = new Date(endMs)
-    const eh = String(endDate.getHours()).padStart(2, '0')
-    const em = String(endDate.getMinutes()).padStart(2, '0')
+    // 跨日时 cap 到 23:59（dayKey 不变，endTime 必须在当天内）
+    const crossesDay = endDate.getDate() !== now.getDate() || endDate.getMonth() !== now.getMonth()
+    const eh = crossesDay ? '23' : String(endDate.getHours()).padStart(2, '0')
+    const em = crossesDay ? '59' : String(endDate.getMinutes()).padStart(2, '0')
     setItems((prev) => prev.map((item) =>
       item.id === itemId ? { ...item, endTime: `${eh}:${em}` } : item
     ))
