@@ -166,7 +166,6 @@ export default function App(): ReactElement {
   const sessionStartMsRef = useRef<number | null>(null)
   const [mdiPanels, setMdiPanels] = useState<MdiPanelState[]>([])
   const [mdiZCounter, setMdiZCounter] = useState(100)
-  const [instantFocusStartMs, setInstantFocusStartMs] = useState<number | null>(null)
   const [startReminder, setStartReminder] = useState<ScheduledItem | null>(null)
   const remindedItemsRef = useRef<Set<string>>(new Set())
   const lastCheckedMinuteRef = useRef<string>('')
@@ -192,7 +191,6 @@ export default function App(): ReactElement {
     if (focusImmersiveItemId === null) {
       setMdiPanels([])
       setMdiZCounter(100)
-      setInstantFocusStartMs(null)
     }
   }, [focusImmersiveItemId])
 
@@ -231,12 +229,6 @@ export default function App(): ReactElement {
       setStartReminder(match)
     }
   })
-
-  const onInstantFocus = useCallback((itemId: string) => {
-    setInstantFocusStartMs(Date.now())
-    setFocusImmersiveItemId(itemId)
-    setFocusPlantNonce(crypto.randomUUID())
-  }, [])
 
   useEffect(() => {
     document.documentElement.classList.toggle('focus-immersive', Boolean(focusImmersiveItemId))
@@ -335,6 +327,19 @@ export default function App(): ReactElement {
     setData((d) => ({ ...d, noteBlocks: fn(d.noteBlocks) }))
   }, [])
 
+  const onInstantFocus = useCallback((itemId: string, durationMinutes: number = 60) => {
+    const now = new Date()
+    const endMs = now.getTime() + durationMinutes * 60_000
+    const endDate = new Date(endMs)
+    const eh = String(endDate.getHours()).padStart(2, '0')
+    const em = String(endDate.getMinutes()).padStart(2, '0')
+    setItems((prev) => prev.map((item) =>
+      item.id === itemId ? { ...item, endTime: `${eh}:${em}` } : item
+    ))
+    setFocusImmersiveItemId(itemId)
+    setFocusPlantNonce(crypto.randomUUID())
+  }, [setItems])
+
   const dateLabel = `${day.slice(0, 4)}年 ${day.slice(5, 7)}月 ${day.slice(8, 10)}日`
 
   const onPinnedChange = useCallback(async (next: boolean) => {
@@ -397,7 +402,6 @@ export default function App(): ReactElement {
                 onPinnedChange={onPinnedChange}
                 layoutBump={layoutBump}
                 onInstantFocus={onInstantFocus}
-                instantFocusStartMs={instantFocusStartMs}
               />
               <MemoStickySection day={day} blocks={data.noteBlocks} setBlocks={setBlocks} />
             </div>
@@ -419,7 +423,6 @@ export default function App(): ReactElement {
             memoBlocks={data.noteBlocks}
             onMemoBlocksChange={setBlocks}
             day={day}
-            instantFocusStartMs={instantFocusStartMs}
           />
         ) : null}
       </main>

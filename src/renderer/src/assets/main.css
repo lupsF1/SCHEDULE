@@ -1356,22 +1356,6 @@ html.focus-immersive #root {
   }
 }
 
-.sticky-plant-lawn {
-  position: relative;
-  width: 100%;
-  height: 100px;
-  overflow: hidden;
-}
-
-.sticky-plant-lawn-blade {
-  position: absolute;
-  transform-origin: bottom center;
-}
-
-.sticky-plant-lawn-blade .sticky-plant-slot > svg {
-  width: 22px;
-  height: auto;
-}
 
 .sticky-clock-digits {
   font-variant-numeric: tabular-nums;

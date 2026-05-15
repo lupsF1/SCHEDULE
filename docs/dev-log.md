@@ -122,6 +122,16 @@
 - **growth span**：无 endTime 事项默认生长周期从 1 小时改为 4 小时（14,400,000ms），避免 1 小时后植物停滞。
 - **fallback 条件化**：用 ref 检测 `useScheduleLiveClock` 的 tick 是否活跃，仅当 tick 连续 2 秒不变时才触发 fallback 状态更新，消除双重 tick 性能问题。
 
+### 立即专注重构：自定义时长 + 复用常规逻辑
+
+- 立即专注改为两步流程：选择事项 → 选择时长（15分/30分/1小时/2小时/3小时/6小时）。
+- 选择时长后，给临时事项设置 `endTime`（当前时间 + 时长），复用常规专注的全部逻辑。
+- 删除 `instantFocusStartMs` state 和所有相关分支（`isInstantFocus`、`getInstantPlantGrowthFraction`）。
+- 删除 `LawnPlantGrowth` 组件和草坪 CSS（不再需要）。
+- 删除 `FocusMdiWorkspace` 的 fallback tick（`useScheduleLiveClock` 现在能正常 tick）。
+- `StickyScheduleCard` 简化为纯常规逻辑：`showClock`、`growth`、`remainRatio` 全部基于 `getRemainingMs` 和 `getPlantGrowthFraction`。
+- 开始提醒的「开始专注」默认使用 60 分钟时长。
+
 ---
 
 ## 2026-05-14

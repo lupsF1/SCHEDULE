@@ -2,7 +2,6 @@ import type { ScheduledItem } from '../domain/appData'
 import { pickStickyPlantSpeciesIndex } from '../domain/stickyPlantKinds'
 import {
   getPlantGrowthFraction,
-  getInstantPlantGrowthFraction,
   getStickyLive,
   getRemainingMs,
   formatHMS,
@@ -13,7 +12,7 @@ import {
 } from '../domain/scheduleTime'
 import { formatFocusAccumulatedCn } from '../domain/focusStats'
 import { useScheduleLiveClock } from '../hooks/useScheduleLiveClock'
-import { StickyPlantGrowth, LawnPlantGrowth } from './StickyPlantGrowth'
+import { StickyPlantGrowth } from './StickyPlantGrowth'
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react'
 
 function StickyScheduleEditor({
@@ -154,8 +153,7 @@ export function StickyScheduleCard({
   onRemove,
   focusPlantNonce,
   immersive,
-  focusTotalMs,
-  instantFocusStartMs
+  focusTotalMs
 }: {
   item: ScheduledItem
   now: Date
@@ -164,15 +162,11 @@ export function StickyScheduleCard({
   focusPlantNonce: string | null
   immersive: boolean
   focusTotalMs: number
-  instantFocusStartMs?: number | null
 }): ReactElement {
   const live = getStickyLive(now, item)
   const remainMs = getRemainingMs(now, item)
-  const isInstantFocus = instantFocusStartMs != null
-  const showClock = isInstantFocus || (remainMs != null && remainMs > 0)
-  const growth = isInstantFocus
-    ? getInstantPlantGrowthFraction(now, instantFocusStartMs!)
-    : getPlantGrowthFraction(now, item)
+  const showClock = remainMs != null && remainMs > 0
+  const growth = getPlantGrowthFraction(now, item)
   const plantSpecies = useMemo(
     () =>
       pickStickyPlantSpeciesIndex(
@@ -185,19 +179,11 @@ export function StickyScheduleCard({
 
   // 专注模式下气泡缩小比例：0 = 完全消失，1 = 完整大小
   let remainRatio = 1
-  if (immersive) {
-    if (isInstantFocus && growth != null) {
-      remainRatio = Math.max(0, 1 - growth)
-    } else if (remainMs != null) {
-      const startMs = dayTimeToDate(item.dayKey, item.startTime).getTime()
-      const endMs = item.endTime ? dayTimeToDate(item.dayKey, item.endTime).getTime() : null
-      if (endMs != null) {
-        const total = Math.max(1, endMs - startMs)
-        remainRatio = Math.max(0, Math.min(1, remainMs / total))
-      } else {
-        remainRatio = remainMs > 0 ? Math.max(0, Math.min(1, remainMs / 3_600_000)) : 0
-      }
-    }
+  if (immersive && remainMs != null && item.endTime) {
+    const startMs = dayTimeToDate(item.dayKey, item.startTime).getTime()
+    const endMs = dayTimeToDate(item.dayKey, item.endTime).getTime()
+    const total = Math.max(1, endMs - startMs)
+    remainRatio = Math.max(0, Math.min(1, remainMs / total))
   }
 
   const endPart = item.endTime ? `\u2003–\u2003${item.endTime}` : ''
@@ -216,20 +202,10 @@ export function StickyScheduleCard({
             className="sticky-clock-face sticky-clock-face--shrinking"
             style={{ '--remain-ratio': remainRatio } as React.CSSProperties}
           >
-            <span className="sticky-clock-digits">
-              {remainMs != null && remainMs > 0
-                ? formatHMS(remainMs)
-                : isInstantFocus
-                  ? formatHMS(now.getTime() - instantFocusStartMs!)
-                  : '--:--:--'}
-            </span>
+            <span className="sticky-clock-digits">{formatHMS(remainMs!)}</span>
           </div>
           {growth != null ? (
-            instantFocusStartMs != null ? (
-              <LawnPlantGrowth speciesIndex={plantSpecies} progress={growth} />
-            ) : (
-              <StickyPlantGrowth speciesIndex={plantSpecies} progress={growth} />
-            )
+            <StickyPlantGrowth speciesIndex={plantSpecies} progress={growth} />
           ) : null}
         </>
       ) : (
@@ -376,6 +352,47 @@ function InstantFocusPicker({
   )
 }
 
+function DurationPicker({
+  onPick,
+  onCancel
+}: {
+  onPick: (minutes: number) => void
+  onCancel: () => void
+}): ReactElement {
+  const options = [15, 30, 60, 120, 180, 360]
+  return (
+    <div className="focus-overlap-backdrop app-no-drag" role="presentation">
+      <div
+        className="focus-overlap-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="duration-picker-heading"
+      >
+        <p id="duration-picker-heading" className="focus-overlap-heading">
+          选择专注时长：
+        </p>
+        <ul className="focus-overlap-list">
+          {options.map((min) => {
+            const h = Math.floor(min / 60)
+            const m = min % 60
+            const label = h > 0 && m > 0 ? `${h}小时${m}分` : h > 0 ? `${h}小时` : `${m}分钟`
+            return (
+              <li key={min}>
+                <button type="button" className="focus-overlap-choice" onClick={() => onPick(min)}>
+                  {label}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+        <button type="button" className="btn-mini btn-mini-ghost focus-overlap-cancel" onClick={onCancel}>
+          取消
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export function FocusImmersiveChrome({
   onExitFocus,
   pinned,
@@ -418,8 +435,7 @@ export function ScheduleStickySection({
   pinned,
   onPinnedChange,
   layoutBump = 0,
-  onInstantFocus,
-  instantFocusStartMs
+  onInstantFocus
 }: {
   day: string
   items: ScheduledItem[]
@@ -432,8 +448,7 @@ export function ScheduleStickySection({
   onPinnedChange: (v: boolean) => void
   /** Optional: bumps when viewport/root size changes so vmin-based layouts can refresh without remounting. */
   layoutBump?: number
-  onInstantFocus?: (itemId: string) => void
-  instantFocusStartMs?: number | null
+  onInstantFocus?: (itemId: string, durationMinutes: number) => void
 }): ReactElement {
   const immersive = focusImmersiveItemId !== null
 
@@ -458,6 +473,8 @@ export function ScheduleStickySection({
   const [overlapCandidates, setOverlapCandidates] = useState<ScheduledItem[]>([])
   const [sectionCollapsed, setSectionCollapsed] = useState(false)
   const [instantPickOpen, setInstantPickOpen] = useState(false)
+  const [durationPickOpen, setDurationPickOpen] = useState(false)
+  const [instantItemId, setInstantItemId] = useState<string | null>(null)
 
   const visibleRows = useMemo(() => {
     if (!immersive || !focusImmersiveItemId) return todayItems
@@ -568,7 +585,6 @@ export function ScheduleStickySection({
             focusTotalMs={focusTotalsMsByItemId[row.id] ?? 0}
             onEdit={() => setEditingId(row.id)}
             onRemove={() => removeItem(row.id)}
-            instantFocusStartMs={immersive && focusImmersiveItemId === row.id ? instantFocusStartMs : null}
           />
         )}
       </div>
@@ -596,10 +612,25 @@ export function ScheduleStickySection({
         <InstantFocusPicker
           items={todayItems.filter((i) => i.committed !== false)}
           onPick={(id) => {
-            onInstantFocus?.(id)
+            setInstantItemId(id)
             setInstantPickOpen(false)
+            setDurationPickOpen(true)
           }}
           onCancel={() => setInstantPickOpen(false)}
+        />
+      ) : null}
+
+      {durationPickOpen ? (
+        <DurationPicker
+          onPick={(minutes) => {
+            if (instantItemId) onInstantFocus?.(instantItemId, minutes)
+            setDurationPickOpen(false)
+            setInstantItemId(null)
+          }}
+          onCancel={() => {
+            setDurationPickOpen(false)
+            setInstantItemId(null)
+          }}
         />
       ) : null}
 
