@@ -141,6 +141,7 @@
 - `remainRatio`（气泡缩小比例）同样以 `focusSession.durationMs` 为基准。
 - 退出专注时累计时间取 `Math.min(durationMs, 实际经过时间)`。
 - 解决了 3 个 bug：不修改原始时间段、气泡/植物以选择时长为基准、每个时长选择独立。
+- **立即专注全天可用**：`InstantFocusPicker` 改为显示所有已提交事项（不限于今天），任何时段均可使用。
 
 ---
 

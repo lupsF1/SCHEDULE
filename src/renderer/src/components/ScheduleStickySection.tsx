@@ -626,7 +626,7 @@ export function ScheduleStickySection({
 
       {instantPickOpen ? (
         <InstantFocusPicker
-          items={todayItems.filter((i) => i.committed !== false)}
+          items={items.filter((i) => i.committed !== false)}
           onPick={(id) => {
             setInstantItemId(id)
             setInstantPickOpen(false)
